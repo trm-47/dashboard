@@ -2,81 +2,72 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>Dashboard KTA - TRM47</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard KTA</title>
     <style>
-        body { background: #000; color: #fff; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; text-align: center; padding: 20px; }
-        .card { border: 8px solid #cc0000; background: #111; display: inline-block; padding: 40px; border-radius: 30px; box-shadow: 0 0 30px #ff0000; max-width: 500px; }
-        .photo-frame { width: 300px; height: 300px; border: 5px solid #fff; border-radius: 20px; margin: 0 auto 20px; overflow: hidden; background: #222; }
+        body { background: #000; color: #fff; font-family: sans-serif; text-align: center; padding-top: 50px; }
+        .card { border: 5px solid #ff0000; display: inline-block; padding: 30px; border-radius: 20px; background: #111; box-shadow: 0 0 20px red; }
+        .photo { width: 250px; height: 250px; border: 3px solid #fff; margin: 0 auto 20px; background: #222; overflow: hidden; }
         img { width: 100%; height: 100%; object-fit: cover; }
-        h1 { font-size: 2.5em; margin: 10px 0; color: #ff0000; text-transform: uppercase; }
-        .jabatan { font-size: 1.5em; color: #ffd700; margin-bottom: 10px; }
-        .kta { font-size: 1.2em; color: #aaa; border-top: 1px solid #333; padding-top: 10px; }
+        h1 { color: #ff0000; margin: 10px 0; }
+        .jabatan { color: gold; font-size: 1.2em; }
     </style>
 </head>
 <body>
 
     <div class="card">
-        <div class="photo-frame">
-            <img id="displayFoto" src="" onerror="this.src='https://via.placeholder.com/300?text=Foto+Tidak+Ditemukan'">
+        <div class="photo">
+            <img id="imgF" src="" onerror="this.src='https://via.placeholder.com/250?text=FOTO'">
         </div>
-        <h1 id="displayNama">Memuat Data...</h1>
-        <div class="jabatan" id="displayJabatan">-</div>
-        <div class="kta" id="displayKTA">KTA: -</div>
+        <h1 id="txtNama">MEMUAT...</h1>
+        <div id="txtJabatan" class="jabatan">-</div>
+        <div id="txtKTA" style="margin-top:10px; color:#888;">KTA: -</div>
+        <div id="txtStatus" style="font-size:10px; color:#333; margin-top:20px;"></div>
     </div>
 
     <script>
-        const API_KEY = 'AIzaSyCAhx4FPEkFPSB1a-3gdeBZKvWOKCGuzHE';
-        const SHEET_ID = '1Egbat36S6ZXP-x_bJNHVIQgJi26H-siDsY538_iGl_8'; 
-        const RANGE = 'Data_Anggota!A2:E200'; // Kita ambil range luas
+        // DATA UTAMA
+        const KEY = 'AIzaSyCAhx4FPEkFPSB1a-3gdeBZKvWOKCGuzHE';
+        const SID = '1Egbat36S6ZXP-x_bJNHVIQgJi26H-siDsY538_iGl_8';
+        const TAB = 'Data_Anggota!A2:E100';
 
-        async function loadData() {
+        async function ambilData() {
+            const status = document.getElementById('txtStatus');
             try {
-                const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${RANGE}?key=${API_KEY}&t=${new Date().getTime()}`;
-                const response = await fetch(url);
-                const data = await response.json();
+                status.innerText = "Mengecek koneksi...";
+                const r = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SID}/values/${TAB}?key=${KEY}`);
+                const d = await r.json();
 
-                if (data.values && data.values.length > 0) {
-                    // FILTER SAKTI: Hanya ambil baris yang kolom Nama (B) isinya bukan Kosong dan bukan FALSE
-                    const barisValid = data.values.filter(row => {
-                        return row[1] && 
-                               row[1].toString().trim() !== "" && 
-                               row[1].toString().toUpperCase() !== "FALSE";
-                    });
+                if (d.values && d.values.length > 0) {
+                    // Filter baris yang kolom B (Nama) tidak kosong dan bukan FALSE
+                    const list = d.values.filter(b => b[1] && b[1].toString().toUpperCase() !== "FALSE");
                     
-                    if (barisValid.length > 0) {
-                        // Ambil baris paling bawah dari hasil filter
-                        const row = barisValid[barisValid.length - 1];
-
-                        const kta = row[0];      // Kolom A
-                        const nama = row[1];     // Kolom B
-                        const fotoRef = row[2];  // Kolom C
-                        const jabatan = row[3];  // Kolom D
-
-                        document.getElementById('displayNama').innerText = nama;
+                    if (list.length > 0) {
+                        const baris = list[list.length - 1]; // Ambil yang paling bawah
                         
-                        // Pembersihan Jabatan dan KTA dari kata FALSE
-                        const txtJabatan = (jabatan && jabatan.toString().toUpperCase() !== "FALSE") ? jabatan : "-";
-                        const txtKTA = (kta && kta.toString().toUpperCase() !== "FALSE") ? kta : "-";
-
-                        document.getElementById('displayJabatan').innerText = txtJabatan;
-                        document.getElementById('displayKTA').innerText = "KTA: " + txtKTA;
-
-                        // Tampilkan Foto jika ada nama filenya di kolom C
-                        if(fotoRef && fotoRef.toString().toUpperCase() !== "FALSE") {
-                            document.getElementById('displayFoto').src = "foto/" + fotoRef;
+                        document.getElementById('txtNama').innerText = baris[1];
+                        document.getElementById('txtJabatan').innerText = (baris[3] && baris[3] !== "FALSE") ? baris[3] : "-";
+                        document.getElementById('txtKTA').innerText = "KTA: " + (baris[0] || "-");
+                        
+                        // Foto
+                        if(baris[2] && baris[2] !== "FALSE") {
+                            document.getElementById('imgF').src = "foto/" + baris[2];
                         }
+                        status.innerText = "Data Terkoneksi!";
                     } else {
-                        document.getElementById('displayNama').innerText = "Menunggu Data...";
+                        document.getElementById('txtNama').innerText = "Belum Ada Data";
                     }
                 }
-            } catch (err) {
-                console.error("Error:", err);
+            } catch (e) {
+                document.getElementById('txtNama').innerText = "ERROR KONEKSI!";
+                console.error(e);
             }
         }
 
-        // Jalankan & Refresh tiap 3 detik
-        loadData();
-        setInterval(loadData, 3000);
+        // Jalankan
+        ambilData();
+        // Refresh tiap 5 detik
+        setInterval(ambilData, 5000);
     </script>
 </body>
 </html>
