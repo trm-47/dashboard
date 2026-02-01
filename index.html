@@ -2,72 +2,62 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard KTA</title>
+    <title>DASHBOARD KTA - TRM47</title>
     <style>
         body { background: #000; color: #fff; font-family: sans-serif; text-align: center; padding-top: 50px; }
-        .card { border: 5px solid #ff0000; display: inline-block; padding: 30px; border-radius: 20px; background: #111; box-shadow: 0 0 20px red; }
-        .photo { width: 250px; height: 250px; border: 3px solid #fff; margin: 0 auto 20px; background: #222; overflow: hidden; }
+        .card { border: 10px solid #cc0000; display: inline-block; padding: 40px; border-radius: 30px; background: #111; box-shadow: 0 0 30px #ff0000; }
+        .foto { width: 280px; height: 280px; border: 5px solid #fff; margin: 0 auto 20px; background: #222; }
         img { width: 100%; height: 100%; object-fit: cover; }
-        h1 { color: #ff0000; margin: 10px 0; }
-        .jabatan { color: gold; font-size: 1.2em; }
+        h1 { color: #ff0000; font-size: 3em; margin: 10px 0; text-transform: uppercase; }
+        .jabatan { color: gold; font-size: 1.8em; }
+        .kta { color: #888; font-size: 1.2em; margin-top: 15px; }
     </style>
 </head>
 <body>
 
     <div class="card">
-        <div class="photo">
-            <img id="imgF" src="" onerror="this.src='https://via.placeholder.com/250?text=FOTO'">
+        <div class="foto">
+            <img id="tampilFoto" src="" onerror="this.src='https://via.placeholder.com/280?text=FOTO'">
         </div>
-        <h1 id="txtNama">MEMUAT...</h1>
-        <div id="txtJabatan" class="jabatan">-</div>
-        <div id="txtKTA" style="margin-top:10px; color:#888;">KTA: -</div>
-        <div id="txtStatus" style="font-size:10px; color:#333; margin-top:20px;"></div>
+        <h1 id="tampilNama">MENUNGGU...</h1>
+        <div id="tampilJabatan" class="jabatan">-</div>
+        <div id="tampilKTA" class="kta">KTA: -</div>
     </div>
 
     <script>
-        // DATA UTAMA
-        const KEY = 'AIzaSyCAhx4FPEkFPSB1a-3gdeBZKvWOKCGuzHE';
-        const SID = '1Egbat36S6ZXP-x_bJNHVIQgJi26H-siDsY538_iGl_8';
-        const TAB = 'Data_Anggota!A2:E100';
+        // URL CSV (Tanpa API KEY lebih aman)
+        const ssID = '1Egbat36S6ZXP-x_bJNHVIQgJi26H-siDsY538_iGl_8';
+        const url = `https://docs.google.com/spreadsheets/d/${ssID}/gviz/tq?tqx=out:csv&sheet=Data_Anggota`;
 
-        async function ambilData() {
-            const status = document.getElementById('txtStatus');
+        async function tarikData() {
             try {
-                status.innerText = "Mengecek koneksi...";
-                const r = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SID}/values/${TAB}?key=${KEY}`);
-                const d = await r.json();
+                const res = await fetch(url);
+                const teks = await res.text();
+                
+                // Pecah data CSV ke Baris
+                const baris = teks.split('\n').map(r => r.split('","').map(c => c.replace(/"/g, '')));
+                
+                // Filter baris yang ada namanya (Kolom Index 1)
+                const dataValid = baris.filter(b => b[1] && b[1].toUpperCase() !== "NAMA" && b[1].toUpperCase() !== "FALSE");
 
-                if (d.values && d.values.length > 0) {
-                    // Filter baris yang kolom B (Nama) tidak kosong dan bukan FALSE
-                    const list = d.values.filter(b => b[1] && b[1].toString().toUpperCase() !== "FALSE");
+                if (dataValid.length > 0) {
+                    const d = dataValid[dataValid.length - 1]; // Ambil orang paling bawah
+
+                    document.getElementById('tampilNama').innerText = d[1];
+                    document.getElementById('tampilJabatan').innerText = d[3] || "-";
+                    document.getElementById('tampilKTA').innerText = "KTA: " + (d[0] || "-");
                     
-                    if (list.length > 0) {
-                        const baris = list[list.length - 1]; // Ambil yang paling bawah
-                        
-                        document.getElementById('txtNama').innerText = baris[1];
-                        document.getElementById('txtJabatan').innerText = (baris[3] && baris[3] !== "FALSE") ? baris[3] : "-";
-                        document.getElementById('txtKTA').innerText = "KTA: " + (baris[0] || "-");
-                        
-                        // Foto
-                        if(baris[2] && baris[2] !== "FALSE") {
-                            document.getElementById('imgF').src = "foto/" + baris[2];
-                        }
-                        status.innerText = "Data Terkoneksi!";
-                    } else {
-                        document.getElementById('txtNama').innerText = "Belum Ada Data";
+                    if(d[2] && d[2] !== "FALSE") {
+                        document.getElementById('tampilFoto').src = "foto/" + d[2];
                     }
                 }
             } catch (e) {
-                document.getElementById('txtNama').innerText = "ERROR KONEKSI!";
-                console.error(e);
+                document.getElementById('tampilNama').innerText = "KONEKSI GAGAL";
             }
         }
 
-        // Jalankan
-        ambilData();
-        // Refresh tiap 5 detik
-        setInterval(ambilData, 5000);
+        setInterval(tarikData, 3000);
+        tarikData();
     </script>
 </body>
 </html>
