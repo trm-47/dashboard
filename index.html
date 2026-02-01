@@ -1,76 +1,27 @@
 <!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <title>DASHBOARD KTA</title>
-    <style>
-        body { background: #000; color: #fff; font-family: 'Arial', sans-serif; text-align: center; padding-top: 40px; }
-        .card { border: 8px solid #ff0000; display: inline-block; padding: 30px; border-radius: 25px; background: #111; box-shadow: 0 0 25px #ff0000; min-width: 320px; }
-        .foto-box { width: 250px; height: 250px; border: 4px solid #fff; margin: 0 auto 20px; background: #222; overflow: hidden; border-radius: 15px; }
-        img { width: 100%; height: 100%; object-fit: cover; }
-        h1 { color: #ff0000; font-size: 2.2em; margin: 10px 0; text-transform: uppercase; }
-        .jab { color: #ffd700; font-size: 1.4em; font-weight: bold; }
-        .kta-txt { color: #666; margin-top: 15px; font-size: 1em; }
-        #debug { font-size: 10px; color: #333; margin-top: 20px; }
-    </style>
-</head>
+<html>
 <body>
-
-    <div class="card">
-        <div class="foto-box">
-            <img id="vFoto" src="" onerror="this.src='https://via.placeholder.com/250?text=FOTO+KOSONG'">
-        </div>
-        <h1 id="vNama">MENGHUBUNGKAN...</h1>
-        <div id="vJabatan" class="jab">-</div>
-        <div id="vKTA" class="kta-txt">KTA: -</div>
-        <div id="debug">System Standby</div>
-    </div>
+    <h1 id="nama">Menunggu data dari Google...</h1>
+    <p id="info"></p>
 
     <script>
-        const S_ID = '1Egbat36S6ZXP-x_bJNHVIQgJi26H-siDsY538_iGl_8';
-        const S_KEY = 'AIzaSyCAhx4FPEkFPSB1a-3gdeBZKvWOKCGuzHE';
-        // Ambil data dalam format CSV (Lebih stabil dari JSON API untuk GitHub Pages)
-        const URL = `https://docs.google.com/spreadsheets/d/${S_ID}/gviz/tq?tqx=out:csv&sheet=Data_Anggota`;
+        const ssID = '1Egbat36S6ZXP-x_bJNHVIQgJi26H-siDsY538_iGl_8';
+        const url = `https://docs.google.com/spreadsheets/d/${ssID}/gviz/tq?tqx=out:csv&sheet=Data_Anggota`;
 
-        async function updateDashboard() {
-            const d = document.getElementById('debug');
+        async function tesKoneksi() {
             try {
-                d.innerText = "Meminta data ke Google...";
-                const res = await fetch(URL);
-                if (!res.ok) throw new Error("Gagal akses Spreadsheet");
+                const res = await fetch(url);
+                const teks = await res.text();
+                console.log(teks); // Lihat di console browser
                 
-                const csv = await res.text();
-                // Parsing CSV sederhana
-                const rows = csv.split('\n').map(row => row.split('","').map(col => col.replace(/"/g, '')));
-                
-                // Filter data: Ambil baris yang ada namanya di Kolom B (index 1)
-                const validRows = rows.filter(r => r[1] && r[1].trim() !== "" && r[1].toUpperCase() !== "NAMA" && r[1].toUpperCase() !== "FALSE");
-
-                if (validRows.length > 0) {
-                    const last = validRows[validRows.length - 1]; // Ambil data paling bawah
-                    
-                    document.getElementById('vNama').innerText = last[1]; // Kolom B
-                    document.getElementById('vJabatan').innerText = (last[3] && last[3] !== "FALSE") ? last[3] : "ANGGOTA"; // Kolom D
-                    document.getElementById('vKTA').innerText = "KTA: " + (last[0] || "-"); // Kolom A
-                    
-                    // Update Foto
-                    if(last[2] && last[2] !== "FALSE") {
-                        document.getElementById('vFoto').src = "foto/" + last[2];
-                    }
-                    d.innerText = "Data diperbarui: " + new Date().toLocaleTimeString();
-                } else {
-                    document.getElementById('vNama').innerText = "DATA TIDAK DITEMUKAN";
-                    d.innerText = "Cek apakah kolom Nama di Sheet sudah terisi.";
-                }
-            } catch (err) {
-                document.getElementById('vNama').innerText = "KONEKSI TERPUTUS";
-                d.innerText = "Error: " + err.message;
+                const baris = teks.split('\n');
+                document.getElementById('nama').innerText = "DATA DITEMUKAN!";
+                document.getElementById('info').innerText = "Jumlah Baris: " + baris.length + " | Data terakhir: " + baris[baris.length-1];
+            } catch (e) {
+                document.getElementById('nama').innerText = "GAGAL TOTAL: " + e.message;
             }
         }
-
-        // Jalankan setiap 5 detik
-        setInterval(updateDashboard, 5000);
-        updateDashboard();
+        tesKoneksi();
     </script>
 </body>
 </html>
