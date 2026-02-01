@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Absensi TRM47</title>
+    <style>
+        body { background: #1a1a1a; color: white; font-family: sans-serif; text-align: center; padding: 20px; }
+        .card { border: 5px solid #cc0000; border-radius: 20px; padding: 40px; display: inline-block; background: #222; }
+        .foto-frame { width: 250px; height: 250px; border: 4px solid #fff; border-radius: 50%; overflow: hidden; margin: 20px auto; background: #333; }
+        img { width: 100%; height: 100%; object-fit: cover; }
+        h1 { color: #ff0000; font-size: 3em; margin: 10px 0; }
+        .status { font-size: 1.5em; background: #ff0000; padding: 10px; border-radius: 10px; }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <h1 id="nama">LOADING...</h1>
+        <div class="foto-frame">
+            <img id="imgTampil" src="" onerror="this.src='https://via.placeholder.com/250?text=No+Foto'">
+        </div>
+        <div class="status" id="status">Menunggu Scan</div>
+    </div>
+
+    <script>
+        // DATA DARI SCREENSHOT BOS
+        const API_KEY = 'AIzaSyCAhx4FPEkFPSB1a-3gdeBZKvWOKCGuzHE';
+        const SPREADSHEET_ID = '1Egbat36S6ZXP-x_bJNHVIQgJi26H-siDsY538_iG1_8';
+        const RANGE = 'Sheet1!A2:E'; 
+
+        async function ambilData() {
+            try {
+                const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${RANGE}?key=${API_KEY}`;
+                const res = await fetch(url);
+                const data = await res.json();
+
+                if (data.values && data.values.length > 0) {
+                    const barisTerakhir = data.values[data.values.length - 1];
+                    
+                    document.getElementById('nama').innerText = barisTerakhir[1] || "Tanpa Nama"; // Kolom B
+                    document.getElementById('status').innerText = barisTerakhir[3] || "Hadir"; // Kolom D
+                    
+                    // Ambil foto dari folder /foto di GitHub Bos
+                    const namaFoto = barisTerakhir[4]; // Kolom E (misal: budi.jpg)
+                    if(namaFoto) {
+                        document.getElementById('imgTampil').src = "foto/" + namaFoto;
+                    }
+                }
+            } catch (e) {
+                console.log("Error:", e);
+            }
+        }
+
+        setInterval(ambilData, 2000); // Cek data tiap 2 detik
+        ambilData();
+    </script>
+</body>
+</html>
