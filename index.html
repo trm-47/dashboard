@@ -2,72 +2,69 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>Koneksi Data Anggota - TRM47</title>
+    <title>Dashboard KTA - TRM47</title>
     <style>
-        body { background: #1a1a1a; color: white; font-family: 'Arial', sans-serif; text-align: center; padding: 30px; }
-        .box { border: 5px solid #cc0000; padding: 30px; display: inline-block; border-radius: 25px; background: #222; box-shadow: 0 0 20px rgba(204,0,0,0.5); }
-        .foto-frame { width: 250px; height: 250px; border: 4px solid #fff; border-radius: 50%; overflow: hidden; margin: 20px auto; background: #333; }
+        body { background: #000; color: #fff; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; text-align: center; padding: 20px; }
+        .card { border: 8px solid #cc0000; background: #111; display: inline-block; padding: 40px; border-radius: 30px; box-shadow: 0 0 30px #ff0000; max-width: 500px; }
+        .photo-frame { width: 300px; height: 300px; border: 5px solid #fff; border-radius: 20px; margin: 0 auto 20px; overflow: hidden; background: #222; }
         img { width: 100%; height: 100%; object-fit: cover; }
-        h1 { color: #ff0000; margin-bottom: 5px; text-transform: uppercase; }
-        .jabatan { font-style: italic; color: #aaa; margin-bottom: 20px; }
-        .info { font-size: 1.2em; background: #444; padding: 10px; border-radius: 10px; }
+        h1 { font-size: 2.5em; margin: 10px 0; color: #ff0000; text-transform: uppercase; }
+        .jabatan { font-size: 1.5em; color: #ffd700; margin-bottom: 10px; }
+        .kta { font-size: 1.2em; color: #aaa; border-top: 1px solid #333; padding-top: 10px; }
     </style>
 </head>
 <body>
 
-    <div class="box">
-        <div class="foto-frame">
-            <img id="imgTampil" src="" onerror="this.src='https://via.placeholder.com/250?text=Foto+Belum+Ada'">
+    <div class="card">
+        <div class="photo-frame">
+            <img id="displayFoto" src="" onerror="this.src='https://via.placeholder.com/300?text=Foto+Tidak+Ditemukan'">
         </div>
-        <h1 id="nama">Menghubungkan...</h1>
-        <div class="jabatan" id="jabatan">-</div>
-        <div class="info" id="kta">KTA: -</div>
+        <h1 id="displayNama">Memuat Data...</h1>
+        <div class="jabatan" id="displayJabatan">-</div>
+        <div class="kta" id="displayKTA">KTA: -</div>
     </div>
 
     <script>
         const API_KEY = 'AIzaSyCAhx4FPEkFPSB1a-3gdeBZKvWOKCGuzHE';
-        const SPREADSHEET_ID = '1Egbat36S6ZXP-x_bJNHVIQgJi26H-siDsY538_iG1_8';
-        const RANGE = 'Data_Anggota!A2:F'; // Ambil kolom A sampai F
+        const SHEET_ID = '1Egbat36S6ZXP-x_bJNHVIQgJi26H-siDsY538_iG1_8';
+        const RANGE = 'Data_Anggota!A2:I100'; // Baca sampai kolom I (foto)
 
-        async function ambilDataAnggota() {
+        async function loadData() {
             try {
-                const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${RANGE}?key=${API_KEY}`;
-                const res = await fetch(url);
-                const data = await res.json();
+                const response = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${RANGE}?key=${API_KEY}`);
+                const data = await response.json();
 
                 if (data.values && data.values.length > 0) {
-                    // Kita ambil data baris pertama (Index 0) untuk tes koneksi
-                    const row = data.values[0]; 
+                    // AMBIL BARIS TERAKHIR (Data orang yang paling baru input)
+                    const row = data.values[data.values.length - 1];
 
-                    // PEMETAAN KOLOM BOS:
-                    // A=0 (KTA), B=1 (Nama), C=2 (Link Foto), E=4 (Jabatan)
-                    const kta = row[0];
-                    const nama = row[1];
-                    const linkFoto = row[2]; // Ini isinya link atau nama file
-                    const jabatan = row[4];
+                    const kta = row[0];      // Kolom A
+                    const nama = row[1];     // Kolom B
+                    const fotoRef = row[2];  // Kolom C (Nama file foto)
+                    const jabatan = row[3];  // Kolom D
 
-                    document.getElementById('nama').innerText = nama || "Nama Tidak Ada";
-                    document.getElementById('jabatan').innerText = jabatan || "Jabatan -";
-                    document.getElementById('kta').innerText = "KTA: " + (kta || "-");
+                    document.getElementById('displayNama').innerText = nama || "Tanpa Nama";
+                    document.getElementById('displayJabatan').innerText = jabatan || "-";
+                    document.getElementById('displayKTA').innerText = "KTA: " + (kta || "-");
 
-                    // LOGIKA FOTO:
-                    // Kita ambil nama filenya saja dari link foto (misal budi.jpg)
-                    // Lalu kita panggil dari folder /foto/ di GitHub Bos
-                    if(linkFoto) {
-                        const namaFile = linkFoto.split('/').pop(); // Mengambil ujung linknya saja
-                        document.getElementById('imgTampil').src = "foto/" + namaFile;
+                    // LOGIKA FOTO GITHUB:
+                    // Jika di Kolom C isinya "budi.jpg", dia cari ke folder foto/budi.jpg
+                    if(fotoRef && !fotoRef.includes('http')) {
+                        document.getElementById('displayFoto').src = "foto/" + fotoRef;
+                    } else if (fotoRef.includes('http')) {
+                        document.getElementById('displayFoto').src = fotoRef;
                     }
                 } else {
-                    document.getElementById('nama').innerText = "Data Sheet Kosong!";
+                    document.getElementById('displayNama').innerText = "Data Kosong di Sheet!";
                 }
-            } catch (e) {
-                document.getElementById('nama').innerText = "Koneksi Gagal!";
-                console.error(e);
+            } catch (err) {
+                document.getElementById('displayNama').innerText = "Gagal Konek!";
+                console.error(err);
             }
         }
 
-        // Jalankan fungsi
-        ambilDataAnggota();
+        // Jalankan otomatis
+        loadData();
     </script>
 </body>
 </html>
