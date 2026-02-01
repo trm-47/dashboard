@@ -64,7 +64,41 @@
         }
 
         // Jalankan otomatis
-        loadData();
+        async function loadData() {
+        try {
+            const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${RANGE}?key=${API_KEY}&t=${new Date().getTime()}`;
+            const response = await fetch(url);
+            const data = await response.json();
+
+            if (data.values && data.values.length > 0) {
+                // FILTER: Hanya ambil baris yang kolom B (Nama) ada isinya
+                const barisValid = data.values.filter(row => row[1] && row[1].trim() !== "");
+                
+                if (barisValid.length > 0) {
+                    // Ambil baris paling bawah yang beneran ada datanya
+                    const row = barisValid[barisValid.length - 1];
+
+                    const kta = row[0];      // Kolom A
+                    const nama = row[1];     // Kolom B
+                    const fotoRef = row[2];  // Kolom C
+                    const jabatan = row[3];  // Kolom D
+
+                    document.getElementById('displayNama').innerText = nama;
+                    document.getElementById('displayJabatan').innerText = jabatan || "-";
+                    document.getElementById('displayKTA').innerText = "KTA: " + (kta || "-");
+
+                    // LOGIKA FOTO:
+                    if(fotoRef) {
+                        document.getElementById('displayFoto').src = "foto/" + fotoRef;
+                    }
+                } else {
+                    document.getElementById('displayNama').innerText = "Belum Ada Data Terisi";
+                }
+            }
+        } catch (err) {
+            console.error(err);
+        }
+    }
     </script>
 </body>
 </html>
