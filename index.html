@@ -2,58 +2,72 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Absensi TRM47</title>
+    <title>Koneksi Data Anggota - TRM47</title>
     <style>
-        body { background: #1a1a1a; color: white; font-family: sans-serif; text-align: center; padding: 20px; }
-        .card { border: 5px solid #cc0000; border-radius: 20px; padding: 40px; display: inline-block; background: #222; }
+        body { background: #1a1a1a; color: white; font-family: 'Arial', sans-serif; text-align: center; padding: 30px; }
+        .box { border: 5px solid #cc0000; padding: 30px; display: inline-block; border-radius: 25px; background: #222; box-shadow: 0 0 20px rgba(204,0,0,0.5); }
         .foto-frame { width: 250px; height: 250px; border: 4px solid #fff; border-radius: 50%; overflow: hidden; margin: 20px auto; background: #333; }
         img { width: 100%; height: 100%; object-fit: cover; }
-        h1 { color: #ff0000; font-size: 3em; margin: 10px 0; }
-        .status { font-size: 1.5em; background: #ff0000; padding: 10px; border-radius: 10px; }
+        h1 { color: #ff0000; margin-bottom: 5px; text-transform: uppercase; }
+        .jabatan { font-style: italic; color: #aaa; margin-bottom: 20px; }
+        .info { font-size: 1.2em; background: #444; padding: 10px; border-radius: 10px; }
     </style>
 </head>
 <body>
 
-    <div class="card">
-        <h1 id="nama">LOADING...</h1>
+    <div class="box">
         <div class="foto-frame">
-            <img id="imgTampil" src="" onerror="this.src='https://via.placeholder.com/250?text=No+Foto'">
+            <img id="imgTampil" src="" onerror="this.src='https://via.placeholder.com/250?text=Foto+Belum+Ada'">
         </div>
-        <div class="status" id="status">Menunggu Scan</div>
+        <h1 id="nama">Menghubungkan...</h1>
+        <div class="jabatan" id="jabatan">-</div>
+        <div class="info" id="kta">KTA: -</div>
     </div>
 
     <script>
-        // DATA DARI SCREENSHOT BOS
         const API_KEY = 'AIzaSyCAhx4FPEkFPSB1a-3gdeBZKvWOKCGuzHE';
         const SPREADSHEET_ID = '1Egbat36S6ZXP-x_bJNHVIQgJi26H-siDsY538_iG1_8';
-        const RANGE = 'Data_Anggota!A2:E'; 
+        const RANGE = 'Data_Anggota!A2:F'; // Ambil kolom A sampai F
 
-        async function ambilData() {
+        async function ambilDataAnggota() {
             try {
                 const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${RANGE}?key=${API_KEY}`;
                 const res = await fetch(url);
                 const data = await res.json();
 
                 if (data.values && data.values.length > 0) {
-                    const barisTerakhir = data.values[data.values.length - 1];
-                    
-                    document.getElementById('nama').innerText = barisTerakhir[1] || "Tanpa Nama"; // Kolom B
-                    document.getElementById('status').innerText = barisTerakhir[3] || "Hadir"; // Kolom D
-                    
-                    // Ambil foto dari folder /foto di GitHub Bos
-                    const namaFoto = barisTerakhir[4]; // Kolom E (misal: budi.jpg)
-                    if(namaFoto) {
-                        document.getElementById('imgTampil').src = "foto/" + namaFoto;
+                    // Kita ambil data baris pertama (Index 0) untuk tes koneksi
+                    const row = data.values[0]; 
+
+                    // PEMETAAN KOLOM BOS:
+                    // A=0 (KTA), B=1 (Nama), C=2 (Link Foto), E=4 (Jabatan)
+                    const kta = row[0];
+                    const nama = row[1];
+                    const linkFoto = row[2]; // Ini isinya link atau nama file
+                    const jabatan = row[4];
+
+                    document.getElementById('nama').innerText = nama || "Nama Tidak Ada";
+                    document.getElementById('jabatan').innerText = jabatan || "Jabatan -";
+                    document.getElementById('kta').innerText = "KTA: " + (kta || "-");
+
+                    // LOGIKA FOTO:
+                    // Kita ambil nama filenya saja dari link foto (misal budi.jpg)
+                    // Lalu kita panggil dari folder /foto/ di GitHub Bos
+                    if(linkFoto) {
+                        const namaFile = linkFoto.split('/').pop(); // Mengambil ujung linknya saja
+                        document.getElementById('imgTampil').src = "foto/" + namaFile;
                     }
+                } else {
+                    document.getElementById('nama').innerText = "Data Sheet Kosong!";
                 }
             } catch (e) {
-                console.log("Error:", e);
+                document.getElementById('nama').innerText = "Koneksi Gagal!";
+                console.error(e);
             }
         }
 
-        setInterval(ambilData, 2000); // Cek data tiap 2 detik
-        ambilData();
+        // Jalankan fungsi
+        ambilDataAnggota();
     </script>
 </body>
 </html>
