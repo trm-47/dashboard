@@ -26,79 +26,57 @@
 
     <script>
         const API_KEY = 'AIzaSyCAhx4FPEkFPSB1a-3gdeBZKvWOKCGuzHE';
-        const SHEET_ID = '1Egbat36S6ZXP-x_bJNHVIQgJi26H-siDsY538_iGl_8';
-        const RANGE = 'Data_Anggota!A2:I100'; // Baca sampai kolom I (foto)
+        const SHEET_ID = '1Egbat36S6ZXP-x_bJNHVIQgJi26H-siDsY538_iGl_8'; 
+        const RANGE = 'Data_Anggota!A2:E200'; // Kita ambil range luas
 
         async function loadData() {
             try {
-                const response = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${RANGE}?key=${API_KEY}`);
+                const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${RANGE}?key=${API_KEY}&t=${new Date().getTime()}`;
+                const response = await fetch(url);
                 const data = await response.json();
 
                 if (data.values && data.values.length > 0) {
-                    // AMBIL BARIS TERAKHIR (Data orang yang paling baru input)
-                    const row = data.values[data.values.length - 1];
+                    // FILTER SAKTI: Hanya ambil baris yang kolom Nama (B) isinya bukan Kosong dan bukan FALSE
+                    const barisValid = data.values.filter(row => {
+                        return row[1] && 
+                               row[1].toString().trim() !== "" && 
+                               row[1].toString().toUpperCase() !== "FALSE";
+                    });
+                    
+                    if (barisValid.length > 0) {
+                        // Ambil baris paling bawah dari hasil filter
+                        const row = barisValid[barisValid.length - 1];
 
-                    const kta = row[0];      // Kolom A
-                    const nama = row[1];     // Kolom B
-                    const fotoRef = row[2];  // Kolom C (Nama file foto)
-                    const jabatan = row[3];  // Kolom D
+                        const kta = row[0];      // Kolom A
+                        const nama = row[1];     // Kolom B
+                        const fotoRef = row[2];  // Kolom C
+                        const jabatan = row[3];  // Kolom D
 
-                    document.getElementById('displayNama').innerText = nama || "Tanpa Nama";
-                    document.getElementById('displayJabatan').innerText = jabatan || "-";
-                    document.getElementById('displayKTA').innerText = "KTA: " + (kta || "-");
+                        document.getElementById('displayNama').innerText = nama;
+                        
+                        // Pembersihan Jabatan dan KTA dari kata FALSE
+                        const txtJabatan = (jabatan && jabatan.toString().toUpperCase() !== "FALSE") ? jabatan : "-";
+                        const txtKTA = (kta && kta.toString().toUpperCase() !== "FALSE") ? kta : "-";
 
-                    // LOGIKA FOTO GITHUB:
-                    // Jika di Kolom C isinya "budi.jpg", dia cari ke folder foto/budi.jpg
-                    if(fotoRef && !fotoRef.includes('http')) {
-                        document.getElementById('displayFoto').src = "foto/" + fotoRef;
-                    } else if (fotoRef.includes('http')) {
-                        document.getElementById('displayFoto').src = fotoRef;
+                        document.getElementById('displayJabatan').innerText = txtJabatan;
+                        document.getElementById('displayKTA').innerText = "KTA: " + txtKTA;
+
+                        // Tampilkan Foto jika ada nama filenya di kolom C
+                        if(fotoRef && fotoRef.toString().toUpperCase() !== "FALSE") {
+                            document.getElementById('displayFoto').src = "foto/" + fotoRef;
+                        }
+                    } else {
+                        document.getElementById('displayNama').innerText = "Menunggu Data...";
                     }
-                } else {
-                    document.getElementById('displayNama').innerText = "Data Kosong di Sheet!";
                 }
             } catch (err) {
-                document.getElementById('displayNama').innerText = "Gagal Konek!";
-                console.error(err);
+                console.error("Error:", err);
             }
         }
 
-        // Jalankan otomatis
-        async function loadData() {
-        try {
-            const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${RANGE}?key=${API_KEY}&t=${new Date().getTime()}`;
-            const response = await fetch(url);
-            const data = await response.json();
-
-            if (data.values && data.values.length > 0) {
-                // FILTER: Hanya ambil baris yang kolom B (Nama) ada isinya
-                const barisValid = data.values.filter(row => row[1] && row[1].trim() !== "");
-                
-                if (barisValid.length > 0) {
-                    // Ambil baris paling bawah yang beneran ada datanya
-                    const row = barisValid[barisValid.length - 1];
-
-                    const kta = row[0];      // Kolom A
-                    const nama = row[1];     // Kolom B
-                    const fotoRef = row[2];  // Kolom C
-                    const jabatan = row[3];  // Kolom D
-
-                    document.getElementById('displayNama').innerText = nama;
-                    document.getElementById('displayJabatan').innerText = jabatan || "-";
-                    document.getElementById('displayKTA').innerText = "KTA: " + (kta || "-");
-
-                    // LOGIKA FOTO:
-                    if(fotoRef) {
-                        document.getElementById('displayFoto').src = "foto/" + fotoRef;
-                    }
-                } else {
-                    document.getElementById('displayNama').innerText = "Belum Ada Data Terisi";
-                }
-            }
-        } catch (err) {
-            console.error(err);
-        }
-    }
+        // Jalankan & Refresh tiap 3 detik
+        loadData();
+        setInterval(loadData, 3000);
     </script>
 </body>
 </html>
