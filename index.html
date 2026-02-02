@@ -26,61 +26,69 @@
 
 <script>
     const ssID = '1Egbat36S6ZXP-x_bJNHVIQgJi26H-siDsY538_iGl_8';
-    // Kita tembak sheet Dashboard_Realtime
+    // Menembak langsung sheet Dashboard_Realtime
     const url = `https://docs.google.com/spreadsheets/d/${ssID}/gviz/tq?tqx=out:csv&sheet=Dashboard_Realtime`;
 
     async function updateDashboard() {
-        console.log("Mencoba sinkronisasi data...");
+        console.log("Sinkronisasi data sedang berjalan...");
         try {
             const res = await fetch(url + '&v=' + new Date().getTime());
             const csv = await res.text();
             
-            // Pecah baris CSV
+            // Parsing CSV (memisahkan kolom)
             const rows = csv.split('\n').map(r => r.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(c => c.replace(/^"|"$/g, '').trim()));
             
-            // Karena data Bos ada di baris A7 (indeks ke-6 di array jika tanpa header)
-            // Tapi karena gviz biasanya menganggap baris pertama yang ada isinya sebagai data, 
-            // kita cari baris yang beneran ada namanya.
+            // Filter: Abaikan header "NAMA" dan tulisan "Data Tidak Ditemukan"
+            // Kita ambil baris yang kolom Namanya (indeks 1) ada isinya
             const validData = rows.filter(r => r[1] && r[1].trim() !== "" && r[1].toUpperCase() !== "NAMA" && r[1] !== "Data Tidak Ditemukan");
 
             if (validData.length > 0) {
-                // Ambil baris pertama dari hasil filter (karena rumus Bos cuma nampilin data yang dicari/terakhir)
+                // Ambil baris pertama dari hasil filter (hasil dari rumus QUERY Bos)
                 const d = validData[0]; 
 
-                // Mapping berdasarkan rumus Bos:
-                // Col1 (d[0]) = KTA
-                // Col2 (d[1]) = Nama
-                // Col3 (d[2]) = Foto (Hasil VLOOKUP ke Data_Anggota kolom 5)
-                // Col4 (d[3]) = Status/Jabatan
-                
-                document.getElementById('displayNama').innerText = d[1];
-                document.getElementById('displayKTA').innerText = "KTA: " + (d[0] || "-");
-                document.getElementById('displayJabatan').innerText = (d[3] && d[3] !== "FALSE") ? d[3] : "HADIR";
+                // UPDATE TAMPILAN
+                document.getElementById('displayNama').innerText = d[1]; // Kolom Nama
+                document.getElementById('displayKTA').innerText = "KTA: " + (d[0] || "-"); // Kolom KTA
+                document.getElementById('displayJabatan').innerText = (d[3] && d[3] !== "" && d[3] !== "FALSE") ? d[3] : "HADIR"; // Kolom Jabatan/Status
 
-                // Logika Foto (Col3 / d[2])
+                // LOGIKA FOTO (Kolom C = Indeks 2)
                 let rawUrl = d[2] ? d[2].trim() : "";
-                let finalFoto = "https://i.imgur.com/861S6pa.png"; 
+                let finalFoto = "https://i.imgur.com/861S6pa.png"; // Logo default jika link kosong
 
-                if (rawUrl.includes("id=")) {
-                    let id = rawUrl.split('id=')[1].split('&')[0];
-                    finalFoto = "https://lh3.googleusercontent.com/d/" + id;
+                if (rawUrl.includes("drive.google.com")) {
+                    let fileId = "";
+                    if (rawUrl.includes("id=")) {
+                        fileId = rawUrl.split('id=')[1].split('&')[0];
+                    } else {
+                        // Ambil ID dari link jenis /file/d/ID/view
+                        let match = rawUrl.match(/\/d\/(.+?)\//);
+                        fileId = match ? match[1] : (rawUrl.match(/[-\w]{25,}/) || [])[0];
+                    }
+                    
+                    if (fileId) {
+                        // Gunakan link sakti untuk Bypass Preview
+                        finalFoto = "https://lh3.googleusercontent.com/d/" + fileId;
+                    }
                 } else if (rawUrl.includes("http")) {
                     finalFoto = rawUrl;
                 }
 
-                if(document.getElementById('displayFoto').src !== finalFoto) {
-                    document.getElementById('displayFoto').src = finalFoto;
+                // Update gambar hanya jika berubah (mencegah kedip berlebihan)
+                const imgElement = document.getElementById('displayFoto');
+                if (imgElement.src !== finalFoto) {
+                    imgElement.src = finalFoto;
                 }
                 
-                console.log("Data Realtime: " + d[1]);
+                console.log("Data Terupdate: " + d[1]);
             }
         } catch (e) {
-            console.error("Error Koneksi:", e.message);
+            console.error("Koneksi ke Spreadsheet bermasalah:", e.message);
         }
     }
 
+    // Jalankan setiap 2 detik agar responsif terhadap scan baru
     updateDashboard();
-    setInterval(updateDashboard, 2000); // Cek tiap 2 detik
+    setInterval(updateDashboard, 2000);
 </script>
 </body>
 </html>
