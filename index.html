@@ -2,85 +2,175 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>DASHBOARD KTA - TRM47</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DASHBOARD MONITOR - DPD PDI PERJUANGAN DIY</title>
     <style>
-        body { background: #000; color: #fff; font-family: 'Arial Black', Gadget, sans-serif; text-align: center; padding-top: 50px; }
-        .card { border: 10px solid #cc0000; display: inline-block; padding: 40px; border-radius: 30px; background: #111; box-shadow: 0 0 40px #ff0000; min-width: 380px; }
-        .foto { width: 300px; height: 300px; border: 5px solid #fff; margin: 0 auto 20px; background: #222; border-radius: 15px; overflow: hidden; }
-        img { width: 100%; height: 100%; object-fit: cover; }
-        h1 { color: #ff0000; font-size: 2.5em; margin: 10px 0; text-transform: uppercase; }
-        .jabatan { color: #ffd700; font-size: 1.8em; font-weight: bold; border-bottom: 2px dashed #333; padding-bottom: 15px; }
-        .kta { color: #888; font-size: 1.3em; margin-top: 20px; font-family: monospace; }
+        :root { --pdi-red: #ed1c24; }
+        body { background: #000; color: #fff; font-family: 'Segoe UI', Roboto, sans-serif; margin: 0; overflow: hidden; }
+        .header-container { display: flex; justify-content: space-between; align-items: center; padding: 20px; background: #111; border-bottom: 3px solid var(--pdi-red); }
+        .logo-box { height: 70px; margin-right: 20px; }
+        .main-title { font-size: 28px; font-weight: bold; color: var(--pdi-red); }
+        .sub-title { font-size: 14px; letter-spacing: 1px; }
+        #digitalClock { font-size: 24px; font-weight: bold; font-family: 'Orbitron', sans-serif; }
+        
+        .info-row { display: flex; padding: 15px; background: #000; }
+        .stat-card { flex: 1; border: 1px solid #333; padding: 15px; text-align: center; border-radius: 8px; margin: 0 5px; }
+        .stat-value { font-size: 32px; font-weight: 900; }
+        .stat-label { font-size: 11px; color: #888; margin-top: 5px; }
+
+        .table-container { height: 60vh; overflow-y: hidden; padding: 0 20px; }
+        table { width: 100%; border-collapse: collapse; }
+        th { background: var(--pdi-red); color: white; padding: 12px; text-align: left; position: sticky; top: 0; }
+        td { padding: 15px; border-bottom: 1px solid #222; }
+
+        #popupPenyambutan {
+            display:none; position:fixed; top:0; left:0; width:100%; height:100%; 
+            background:rgba(0,0,0,0.95); z-index:99999; flex-direction:column; 
+            align-items:center; justify-content:center; text-align:center;
+        }
+        .popup-content { border: 5px solid var(--pdi-red); padding: 50px; border-radius: 20px; background: rgba(139,0,0,0.2); }
+        
+        .system-footer { position: fixed; bottom: 0; width: 100%; background: #111; display: flex; align-items: center; padding: 10px; border-top: 2px solid var(--pdi-red); }
+        marquee { flex-grow: 1; color: #fff; font-weight: bold; }
     </style>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;900&display=swap" rel="stylesheet">
 </head>
 <body>
 
-    <div class="card">
-        <div class="foto">
-            <img id="displayFoto" src="" onerror="this.src='https://via.placeholder.com/300?text=FOTO+ANGGOTA'">
+    <div class="header-container">
+        <div style="display: flex; align-items: center;">
+            <img src="https://i.ibb.co.com/gZdHM1dK/PDI-Perjuangan-2.png" class="logo-box">
+            <div>
+                <div class="main-title">DASHBOARD MONITOR</div>
+                <div class="sub-title">DPD PDI PERJUANGAN DAERAH ISTIMEWA YOGYAKARTA</div>
+            </div>
         </div>
-        <h1 id="displayNama">MENUNGGU...</h1>
-        <div id="displayJabatan" class="jabatan">-</div>
-        <div id="displayKTA" class="kta">KTA: -</div>
+        <div id="digitalClock">00:00:00</div>
     </div>
 
-<script>
-    const ssID = '1Egbat36S6ZXP-x_bJNHVIQgJi26H-siDsY538_iGl_8';
-    const url = `https://docs.google.com/spreadsheets/d/${ssID}/gviz/tq?tqx=out:csv&sheet=Dashboard_Realtime`;
+    <div class="info-row">
+        <div class="stat-card"><div id="countHadir" class="stat-value" style="color: var(--pdi-red);">0</div><div class="stat-label">TOTAL HADIR</div></div>
+        <div class="stat-card"><div id="percentHadir" class="stat-value">0%</div><div class="stat-label">KEHADIRAN</div></div>
+        <div class="stat-card" style="flex: 2; background: #1a1a1a;"><div id="displayNama" class="stat-value" style="color:yellow; font-size: 24px;">MENUNGGU SCAN...</div><div class="stat-label">TERAKHIR MASUK</div></div>
+    </div>
 
-    async function updateDashboard() {
-        try {
-            const res = await fetch(url + '&v=' + new Date().getTime());
-            const csv = await res.text();
-            const rows = csv.split('\n').map(r => r.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(c => c.replace(/^"|"$/g, '').trim()));
-            
-            const validData = rows.filter(r => r[1] && r[1].trim() !== "" && r[1].toUpperCase() !== "NAMA" && r[1] !== "Data Tidak Ditemukan");
+    <div class="table-container" id="scrollContainer">
+        <table>
+            <thead>
+                <tr>
+                    <th>NAMA PENGURUS</th>
+                    <th>JABATAN</th>
+                    <th>STATUS</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+        </table>
+    </div>
 
-            if (validData.length > 0) {
-                const d = validData[0]; 
+    <div id="popupPenyambutan">
+        <div class="popup-content">
+            <h1 style="color: var(--pdi-red); font-size: 40px;">SELAMAT DATANG</h1>
+            <div id="namaPopup" style="font-size: 60px; font-weight: 900;">-</div>
+            <img id="fotoPopup" src="" style="width: 250px; height: 300px; object-fit: cover; border: 4px solid #fff; margin: 20px; border-radius: 10px;">
+            <div id="jabatanPopup" style="font-size: 25px; color: #ccc;">-</div>
+        </div>
+    </div>
 
-                // TAMPILKAN DATA
-                document.getElementById('displayNama').innerText = d[1]; // Kolom B
-                document.getElementById('displayKTA').innerText = "KTA: " + (d[0] || "-"); // Kolom A
-                
-                // Gabungkan Jabatan & Status biar informatif
-                let jabatan = d[2] || "ANGGOTA";
-                let status = d[3] || "HADIR";
-                document.getElementById('displayJabatan').innerText = `${jabatan} | ${status}`;
+    <div class="system-footer">
+        <button onclick="aktifkanAudio()" id="btnAudio" style="background: #333; color: white; border: none; padding: 5px 15px; cursor: pointer;">AUDIO OFF</button>
+        <marquee id="marqueeFooter">MERDEKA! - SELAMAT DATANG DI DPD PDI PERJUANGAN DIY - TETAP TEGAK LURUS!</marquee>
+    </div>
 
-                // LOGIKA FOTO (Kolom E = Indeks ke-4)
-                let rawUrl = d[4] ? d[4].trim() : ""; 
-                let finalFoto = "https://i.imgur.com/861S6pa.png"; 
+    <script>
+        const ssID = '1Egbat36S6ZXP-x_bJNHVIQgJi26H-siDsY538_iGl_8';
+        const url = `https://docs.google.com/spreadsheets/d/${ssID}/gviz/tq?tqx=out:csv&sheet=Dashboard_Realtime`;
+        
+        let lastId = "";
+        let audioEnabled = false;
 
-                if (rawUrl.includes("drive.google.com")) {
-                    let fileId = "";
-                    if (rawUrl.includes("id=")) {
-                        fileId = rawUrl.split('id=')[1].split('&')[0];
-                    } else {
-                        let match = rawUrl.match(/\/d\/(.+?)\//);
-                        fileId = match ? match[1] : (rawUrl.match(/[-\w]{25,}/) || [])[0];
-                    }
-                    if (fileId) {
-                        finalFoto = "https://lh3.googleusercontent.com/d/" + fileId;
-                    }
-                } else if (rawUrl.includes("http")) {
-                    finalFoto = rawUrl;
-                }
-
-                const imgElement = document.getElementById('displayFoto');
-                if (imgElement.src !== finalFoto) {
-                    imgElement.src = finalFoto;
-                }
-                
-                console.log("Data Terkini: " + d[1] + " [" + status + "]");
-            }
-        } catch (e) {
-            console.error("Gagal Sinkron:", e.message);
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('digitalClock').innerText = now.toLocaleTimeString('id-ID');
         }
-    }
+        setInterval(updateClock, 1000);
 
-    updateDashboard();
-    setInterval(updateDashboard, 2000);
-</script>
+        function aktifkanAudio() {
+            audioEnabled = !audioEnabled;
+            document.getElementById('btnAudio').innerText = audioEnabled ? "AUDIO ON" : "AUDIO OFF";
+            document.getElementById('btnAudio').style.background = audioEnabled ? "red" : "#333";
+            if(audioEnabled) bicara("Sistem Audio Aktif");
+        }
+
+        function bicara(teks) {
+            if(!audioEnabled) return;
+            window.speechSynthesis.cancel();
+            let u = new SpeechSynthesisUtterance(teks);
+            u.lang = 'id-ID';
+            window.speechSynthesis.speak(u);
+        }
+
+        async function fetchRealtime() {
+            try {
+                const res = await fetch(url + '&v=' + new Date().getTime());
+                const csv = await res.text();
+                const rows = csv.split('\n').map(r => r.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(c => c.replace(/^"|"$/g, '').trim()));
+                
+                const validData = rows.filter(r => r[1] && r[1].toUpperCase() !== "NAMA" && r[1] !== "Data Tidak Ditemukan");
+                
+                if (validData.length > 0) {
+                    renderTable(validData);
+                    const top = validData[0];
+                    
+                    // Cek jika ada scan baru
+                    if (top[0] !== lastId) {
+                        showPopup(top);
+                        lastId = top[0];
+                    }
+                }
+            } catch (e) { console.error(e); }
+        }
+
+        function renderTable(data) {
+            let html = "";
+            data.forEach(r => {
+                html += `<tr>
+                    <td style="font-weight:bold;">${r[1]}</td>
+                    <td style="color:#bbb;">${r[2]}</td>
+                    <td style="color:var(--pdi-red); font-weight:bold;">${r[3]}</td>
+                </tr>`;
+            });
+            document.getElementById('tableBody').innerHTML = html;
+            document.getElementById('countHadir').innerText = data.length;
+        }
+
+        function showPopup(d) {
+            const pop = document.getElementById('popupPenyambutan');
+            document.getElementById('namaPopup').innerText = d[1];
+            document.getElementById('jabatanPopup').innerText = d[2] + " | " + d[3];
+            
+            // Logika Foto Drive (Kolom E = Indeks 4)
+            let foto = d[4] || "https://i.imgur.com/861S6pa.png";
+            if(foto.includes("id=")) {
+                let id = foto.split('id=')[1].split('&')[0];
+                foto = "https://lh3.googleusercontent.com/d/" + id;
+            }
+            document.getElementById('fotoPopup').src = foto;
+            document.getElementById('displayNama').innerText = d[1];
+
+            pop.style.display = 'flex';
+            bicara("Selamat datang, " + d[1]);
+            
+            setTimeout(() => { pop.style.display = 'none'; }, 5000);
+        }
+
+        setInterval(fetchRealtime, 3000);
+        
+        // Auto Scroll Efek
+        setInterval(() => {
+            const el = document.getElementById('scrollContainer');
+            if (el.scrollTop + el.clientHeight >= el.scrollHeight) el.scrollTop = 0;
+            else el.scrollTop += 1;
+        }, 50;
+    </script>
 </body>
 </html>
