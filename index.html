@@ -30,56 +30,6 @@
     const url = `https://docs.google.com/spreadsheets/d/${ssID}/gviz/tq?tqx=out:csv&sheet=Data_Anggota`;
 
     async function updateDashboard() {
-        try {
-            const res = await fetch(url + '&v=' + Math.random());
-            const csv = await res.text();
-            
-            // Pecah data CSV jadi baris dan kolom
-            const rows = csv.split('\n').map(r => r.split('","').map(c => c.replace(/"/g, '')));
-            
-            // Filter hanya baris yang ada namanya (biar baris kosong 1000 biji itu nggak ganggu)
-            const validData = rows.filter(r => r[1] && r[1].trim() !== "" && r[1].toUpperCase() !== "NAMA" && r[1].toUpperCase() !== "FALSE");
-
-            if (validData.length > 0) {
-                const d = validData[validData.length - 1]; // Ambil data terakhir (paling baru)
-
-                // 1. Update Nama, Jabatan, KTA
-                document.getElementById('displayNama').innerText = d[1];
-                document.getElementById('displayKTA').innerText = "KTA: " + (d[0] || "-");
-                document.getElementById('displayJabatan').innerText = (d[3] && d[3] !== "FALSE") ? d[3] : "ANGGOTA";
-
-                // 2. Cloning Logika Foto (Ini bagian paling penting!)
-                let rawUrl = d[2] ? d[2].trim() : "";
-                let finalFoto = "https://via.placeholder.com/300?text=FOTO+KOSONG";
-
-                if (rawUrl.includes("drive.google.com")) {
-                    // Jika link dari Google Drive, kita bedah ID-nya otomatis
-                    let fileId = "";
-                    if (rawUrl.includes("id=")) {
-                        fileId = rawUrl.split('id=')[1].split('&')[0];
-                    } else {
-                        fileId = (rawUrl.match(/[-\w]{25,}/) || [])[0];
-                    }
-                    
-                    if (fileId) {
-                        // Link sakti supaya tembus ke dashboard
-                        finalFoto = `https://lh3.googleusercontent.com/d/${fileId}`;
-                    }
-                } else if (rawUrl.includes("http")) {
-                    // Jika link gambar biasa (bukan Drive)
-                    finalFoto = rawUrl;
-                } else if (rawUrl !== "" && rawUrl !== "FALSE") {
-                    // Jika cuma nama file (cari di folder foto GitHub)
-                    finalFoto = "foto/" + rawUrl;
-                }
-
-                // Tampilkan Foto
-                document.getElementById('displayFoto').src = finalFoto;
-            }
-        } catch (e) {
-            console.error("Gagal update data:", e);
-        }
-    }
 
     // Jalankan otomatis setiap 3 detik (biar real-time kayak GAS)
     setInterval(updateDashboard, 3000);
