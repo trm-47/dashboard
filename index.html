@@ -1,176 +1,179 @@
 <!DOCTYPE html>
-<html lang="id">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DASHBOARD MONITOR - DPD PDI PERJUANGAN DIY</title>
-    <style>
-        :root { --pdi-red: #ed1c24; }
-        body { background: #000; color: #fff; font-family: 'Segoe UI', Roboto, sans-serif; margin: 0; overflow: hidden; }
-        .header-container { display: flex; justify-content: space-between; align-items: center; padding: 20px; background: #111; border-bottom: 3px solid var(--pdi-red); }
-        .logo-box { height: 70px; margin-right: 20px; }
-        .main-title { font-size: 28px; font-weight: bold; color: var(--pdi-red); }
-        .sub-title { font-size: 14px; letter-spacing: 1px; }
-        #digitalClock { font-size: 24px; font-weight: bold; font-family: 'Orbitron', sans-serif; }
-        
-        .info-row { display: flex; padding: 15px; background: #000; }
-        .stat-card { flex: 1; border: 1px solid #333; padding: 15px; text-align: center; border-radius: 8px; margin: 0 5px; }
-        .stat-value { font-size: 32px; font-weight: 900; }
-        .stat-label { font-size: 11px; color: #888; margin-top: 5px; }
+  <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@500;700&display=swap" rel="stylesheet">
+  
+  <style>
+    /* --- CSS MILIK BOS (SUDAH DIOPTIMALKAN) --- */
+    * { box-sizing: border-box; }
+    :root { --pdi-red: #FF0000; --pdi-black: #000000; --pdi-white: #FFFFFF; --pdi-silver: #CCCCCC; }
+    
+    body {
+      height: 100vh; margin: 0; padding: 20px 50px 80px 50px;
+      display: flex; flex-direction: column; overflow: hidden;
+      background: radial-gradient(circle, #200000 0%, #000000 100%);
+      font-family: 'Rajdhani', sans-serif; color: var(--pdi-white);
+    }
 
-        .table-container { height: 60vh; overflow-y: hidden; padding: 0 20px; }
-        table { width: 100%; border-collapse: collapse; }
-        th { background: var(--pdi-red); color: white; padding: 12px; text-align: left; position: sticky; top: 0; }
-        td { padding: 15px; border-bottom: 1px solid #222; }
+    .header-container {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 15px 40px; margin-bottom: 15px;
+      background: linear-gradient(180deg, rgba(50, 0, 0, 0.9) 0%, rgba(0, 0, 0, 1) 100%);
+      border: 3px solid var(--pdi-red); border-radius: 15px; position: relative; overflow: hidden;
+    }
 
-        #popupPenyambutan {
-            display:none; position:fixed; top:0; left:0; width:100%; height:100%; 
-            background:rgba(0,0,0,0.95); z-index:99999; flex-direction:column; 
-            align-items:center; justify-content:center; text-align:center;
-        }
-        .popup-content { border: 5px solid var(--pdi-red); padding: 50px; border-radius: 20px; background: rgba(139,0,0,0.2); }
-        
-        .system-footer { position: fixed; bottom: 0; width: 100%; background: #111; display: flex; align-items: center; padding: 10px; border-top: 2px solid var(--pdi-red); }
-        marquee { flex-grow: 1; color: #fff; font-weight: bold; }
-    </style>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;900&display=swap" rel="stylesheet">
+    .main-title { font-family: 'Orbitron'; font-size: 42px; font-weight: 900; text-shadow: 3px 3px 15px var(--pdi-red); letter-spacing: 3px; }
+
+    .info-row { display: flex; gap: 15px; margin-bottom: 15px; }
+    .stat-card { flex: 1; padding: 15px; border-radius: 12px; text-align: center; background: linear-gradient(145deg, #111, #000); border: 2px solid rgba(255, 255, 255, 0.1); transition: 0.3s; }
+    .stat-value { font-family: 'Orbitron'; font-size: 48px; font-weight: 900; text-shadow: 0 0 10px var(--pdi-red); }
+    .stat-label { color: var(--pdi-silver); font-weight: 700; font-size: 14px; text-transform: uppercase; }
+
+    .table-container {
+      flex: 1; overflow-y: hidden; border-radius: 15px;
+      border: 1px solid rgba(255, 0, 0, 0.3); background: rgba(0, 0, 0, 0.5);
+      position: relative; box-shadow: 0 0 20px rgba(255, 0, 0, 0.2);
+    }
+
+    table { width: 100%; border-collapse: separate; border-spacing: 0; }
+    thead th {
+      position: sticky; top: 0; z-index: 10; background: #000;
+      padding: 20px; border-bottom: 5px solid var(--pdi-red);
+      font-family: 'Orbitron'; font-size: 18px; text-align: left;
+    }
+
+    td { padding: 15px 20px; border-bottom: 1px solid rgba(255, 255, 255, 0.05); font-size: 24px; font-weight: 700; }
+    
+    .status-badge {
+      display: inline-block; padding: 5px 15px; border-radius: 5px;
+      font-family: 'Orbitron'; font-size: 14px; font-weight: 900; border: 1px solid #fff;
+    }
+
+    .system-footer {
+      position: fixed; bottom: 0; left: 0; width: 100%; height: 50px;
+      display: flex; align-items: center; z-index: 9999;
+      background: linear-gradient(to top, rgba(229, 26, 21, 0.4) 0%, transparent 100%);
+    }
+
+    .footer-label { background: #e51a15; color: white; padding: 0 30px; height: 100%; display: flex; align-items: center; font-family: 'Orbitron'; font-weight: 900; clip-path: polygon(0 0, 85% 0, 100% 100%, 0% 100%); }
+
+    /* Animasi Baris Baru */
+    .row-baru { animation: rowGlow 2s infinite ease-in-out; border-left: 10px solid #ff0000 !important; }
+    @keyframes rowGlow { 0%, 100% { background: rgba(255, 0, 0, 0.1); } 50% { background: rgba(255, 0, 0, 0.3); } }
+  </style>
 </head>
+
 <body>
 
-    <div class="header-container">
-        <div style="display: flex; align-items: center;">
-            <img src="https://i.ibb.co.com/gZdHM1dK/PDI-Perjuangan-2.png" class="logo-box">
-            <div>
-                <div class="main-title">DASHBOARD MONITOR</div>
-                <div class="sub-title">DPD PDI PERJUANGAN DAERAH ISTIMEWA YOGYAKARTA</div>
-            </div>
-        </div>
-        <div id="digitalClock">00:00:00</div>
+  <div class="header-container">
+    <div>
+      <div class="main-title">MONITORING SYSTEM</div>
+      <div class="sub-title">REAL-TIME ATTENDANCE DATA CENTER</div>
     </div>
+    <div class="time-big" id="jamDigital">00:00:00</div>
+  </div>
 
-    <div class="info-row">
-        <div class="stat-card"><div id="countHadir" class="stat-value" style="color: var(--pdi-red);">0</div><div class="stat-label">TOTAL HADIR</div></div>
-        <div class="stat-card"><div id="percentHadir" class="stat-value">0%</div><div class="stat-label">KEHADIRAN</div></div>
-        <div class="stat-card" style="flex: 2; background: #1a1a1a;"><div id="displayNama" class="stat-value" style="color:yellow; font-size: 24px;">MENUNGGU SCAN...</div><div class="stat-label">TERAKHIR MASUK</div></div>
+  <div class="info-row">
+    <div class="stat-card">
+      <div class="stat-value" id="countHadir">0</div>
+      <div class="stat-label">Total Hadir</div>
     </div>
-
-    <div class="table-container" id="scrollContainer">
-        <table>
-            <thead>
-                <tr>
-                    <th>NAMA PENGURUS</th>
-                    <th>JABATAN</th>
-                    <th>STATUS</th>
-                </tr>
-            </thead>
-            <tbody id="tableBody"></tbody>
-        </table>
+    <div class="stat-card">
+      <div class="stat-value" id="countIzin">0</div>
+      <div class="stat-label">Izin/Sakit</div>
     </div>
-
-    <div id="popupPenyambutan">
-        <div class="popup-content">
-            <h1 style="color: var(--pdi-red); font-size: 40px;">SELAMAT DATANG</h1>
-            <div id="namaPopup" style="font-size: 60px; font-weight: 900;">-</div>
-            <img id="fotoPopup" src="" style="width: 250px; height: 300px; object-fit: cover; border: 4px solid #fff; margin: 20px; border-radius: 10px;">
-            <div id="jabatanPopup" style="font-size: 25px; color: #ccc;">-</div>
-        </div>
+    <div class="stat-card">
+      <div class="stat-value" id="countPersen">0%</div>
+      <div class="stat-label">Persentase</div>
     </div>
+  </div>
 
-    <div class="system-footer">
-        <button onclick="aktifkanAudio()" id="btnAudio" style="background: #333; color: white; border: none; padding: 5px 15px; cursor: pointer;">AUDIO OFF</button>
-        <marquee id="marqueeFooter">MERDEKA! - SELAMAT DATANG DI DPD PDI PERJUANGAN DIY - TETAP TEGAK LURUS!</marquee>
-    </div>
+  <div class="table-container" id="scrollContainer">
+    <table>
+      <thead>
+        <tr>
+          <th style="width: 10%; text-align: center;">NO</th>
+          <th style="width: 50%;">NAMA PENGURUS</th>
+          <th style="width: 20%;">WAKTU</th>
+          <th style="width: 20%; text-align: center;">STATUS</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody">
+        </tbody>
+    </table>
+  </div>
 
-    <script>
-        const ssID = '1Egbat36S6ZXP-x_bJNHVIQgJi26H-siDsY538_iGl_8';
-        const url = `https://docs.google.com/spreadsheets/d/${ssID}/gviz/tq?tqx=out:csv&sheet=Dashboard_Realtime`;
+  <footer class="system-footer">
+    <div class="footer-label">SYSTEM INFO</div>
+    <marquee id="marqueeFooter">Menunggu Sinkronisasi Data Dari Server...</marquee>
+  </footer>
+
+  <script>
+    let barisTerakhir = 0;
+
+    // 1. Fungsi Jam
+    function updateJam() {
+      const now = new Date();
+      document.getElementById('jamDigital').innerText = now.toLocaleTimeString('id-ID');
+    }
+    setInterval(updateJam, 1000);
+
+    // 2. Ambil Data Dari Spreadsheet
+    function muatData() {
+      google.script.run.withSuccessHandler(tampilkanData).getDataDashboard();
+    }
+
+    function tampilkanData(data) {
+      // Update KPI
+      document.getElementById('countHadir').innerText = data.hadir;
+      document.getElementById('countIzin').innerText = data.izin;
+      document.getElementById('countPersen').innerText = (data.persen * 100).toFixed(1) + "%";
+
+      // Update Tabel
+      const tbody = document.getElementById('tableBody');
+      let html = "";
+      
+      data.daftar.forEach((row, index) => {
+        let statusStyle = row[3] === "HADIR" ? "color: #FF0000; border-color: #FF0000;" : "color: #FFF; border-color: #FFF;";
+        let rowClass = (index + 1 > barisTerakhir && barisTerakhir !== 0) ? "row-baru" : "";
         
-        let lastId = "";
-        let audioEnabled = false;
+        html += `<tr class="${rowClass}">
+          <td style="text-align: center;">${row[0]}</td>
+          <td>${row[1]}</td>
+          <td>${row[2]}</td>
+          <td style="text-align: center;"><span class="status-badge" style="${statusStyle}">${row[3]}</span></td>
+        </tr>`;
+      });
+      
+      tbody.innerHTML = html;
+      
+      // Update Marquee Footer
+      if(data.daftar.length > 0) {
+        document.getElementById('marqueeFooter').innerText = `Update Terakhir: ${new Date().toLocaleTimeString()} | Total Pengurus Terdata: ${data.daftar.length} Orang.`;
+      }
+      
+      barisTerakhir = data.daftar.length;
+    }
 
-        function updateClock() {
-            const now = new Date();
-            document.getElementById('digitalClock').innerText = now.toLocaleTimeString('id-ID');
+    // 3. Auto Scroll (Cocok buat Videotron)
+    function autoScroll() {
+      const container = document.getElementById('scrollContainer');
+      if (container.scrollHeight > container.clientHeight) {
+        if (container.scrollTop + container.clientHeight >= container.scrollHeight) {
+          setTimeout(() => { container.scrollTop = 0; }, 2000);
+        } else {
+          container.scrollTop += 1;
         }
-        setInterval(updateClock, 1000);
+      }
+    }
 
-        function aktifkanAudio() {
-            audioEnabled = !audioEnabled;
-            document.getElementById('btnAudio').innerText = audioEnabled ? "AUDIO ON" : "AUDIO OFF";
-            document.getElementById('btnAudio').style.background = audioEnabled ? "red" : "#333";
-            if(audioEnabled) bicara("Sistem Audio Aktif");
-        }
-
-        function bicara(teks) {
-            if(!audioEnabled) return;
-            window.speechSynthesis.cancel();
-            let u = new SpeechSynthesisUtterance(teks);
-            u.lang = 'id-ID';
-            window.speechSynthesis.speak(u);
-        }
-
-        async function fetchRealtime() {
-            try {
-                const res = await fetch(url + '&v=' + new Date().getTime());
-                const csv = await res.text();
-                const rows = csv.split('\n').map(r => r.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(c => c.replace(/^"|"$/g, '').trim()));
-                
-                const validData = rows.filter(r => r[1] && r[1].toUpperCase() !== "NAMA" && r[1] !== "Data Tidak Ditemukan");
-                
-                if (validData.length > 0) {
-                    renderTable(validData);
-                    const top = validData[0];
-                    
-                    // Cek jika ada scan baru
-                    if (top[0] !== lastId) {
-                        showPopup(top);
-                        lastId = top[0];
-                    }
-                }
-            } catch (e) { console.error(e); }
-        }
-
-        function renderTable(data) {
-            let html = "";
-            data.forEach(r => {
-                html += `<tr>
-                    <td style="font-weight:bold;">${r[1]}</td>
-                    <td style="color:#bbb;">${r[2]}</td>
-                    <td style="color:var(--pdi-red); font-weight:bold;">${r[3]}</td>
-                </tr>`;
-            });
-            document.getElementById('tableBody').innerHTML = html;
-            document.getElementById('countHadir').innerText = data.length;
-        }
-
-        function showPopup(d) {
-            const pop = document.getElementById('popupPenyambutan');
-            document.getElementById('namaPopup').innerText = d[1];
-            document.getElementById('jabatanPopup').innerText = d[2] + " | " + d[3];
-            
-            // Logika Foto Drive (Kolom E = Indeks 4)
-            let foto = d[4] || "https://i.imgur.com/861S6pa.png";
-            if(foto.includes("id=")) {
-                let id = foto.split('id=')[1].split('&')[0];
-                foto = "https://lh3.googleusercontent.com/d/" + id;
-            }
-            document.getElementById('fotoPopup').src = foto;
-            document.getElementById('displayNama').innerText = d[1];
-
-            pop.style.display = 'flex';
-            bicara("Selamat datang, " + d[1]);
-            
-            setTimeout(() => { pop.style.display = 'none'; }, 5000);
-        }
-
-        setInterval(fetchRealtime, 3000);
-        
-        // Auto Scroll Efek
-        setInterval(() => {
-            const el = document.getElementById('scrollContainer');
-            if (el.scrollTop + el.clientHeight >= el.scrollHeight) el.scrollTop = 0;
-            else el.scrollTop += 1;
-        }, 50;
-    </script>
+    // Jalankan Interval
+    setInterval(muatData, 5000); // Cek data tiap 5 detik
+    setInterval(autoScroll, 50); // Jalankan scroll halus
+    muatData(); // Jalankan sekali saat start
+  </script>
 </body>
 </html>
