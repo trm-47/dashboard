@@ -25,56 +25,82 @@
     </div>
 
     <script>
-    // ID Spreadsheet Bos
     const ssID = '1Egbat36S6ZXP-x_bJNHVIQgJi26H-siDsY538_iGl_8';
+    // Gunakan gviz tq tanpa parameter sheet jika nama sheetnya default, 
+    // atau pastikan nama sheet 'Data_Anggota' benar-benar pas ejaannya.
     const url = `https://docs.google.com/spreadsheets/d/${ssID}/gviz/tq?tqx=out:csv&sheet=Data_Anggota`;
 
     async function updateDashboard() {
-        console.log("Mencoba mengambil data..."); // Ini harus muncul di Inspect
+        console.log("Mencoba mengambil data...");
         try {
             const res = await fetch(url + '&v=' + new Date().getTime());
             if (!res.ok) throw new Error("Gagal konek ke Google Sheets");
             
             const csv = await res.text();
-            console.log("Data CSV diterima!");
-
-            const rows = csv.split('\n').map(r => r.split('","').map(c => c.replace(/"/g, '')));
             
-            // Filter data yang kolom namanya ada isinya
-            const validData = rows.filter(r => r[1] && r[1].trim() !== "" && r[1].toUpperCase() !== "NAMA");
+            // Proses pembersihan CSV yang lebih tangguh
+            const rows = csv.split('\n').map(r => {
+                return r.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(c => c.replace(/^"|"$/g, '').trim());
+            });
+            
+            // FILTER: Hanya ambil baris yang kolom NAMANYA (Indeks 1) tidak kosong, 
+            // bukan kata "NAMA", dan bukan "FALSE"
+            const validData = rows.filter(r => 
+                r[1] && 
+                r[1] !== "" && 
+                r[1].toUpperCase() !== "NAMA" && 
+                r[1].toUpperCase() !== "NAMA ANGGOTA" &&
+                r[1].toUpperCase() !== "FALSE"
+            );
 
-            console.log("Total baris valid:", validData.length);
+            console.log("Total baris valid ditemukan:", validData.length);
 
             if (validData.length > 0) {
-                const d = validData[validData.length - 1]; // Ambil baris terakhir
+                // KUNCINYA DI SINI: Ambil baris paling terakhir yang terisi
+                const d = validData[validData.length - 1]; 
                 
-                // Update ke Layar
-                document.getElementById('displayNama').innerText = d[1];
-                document.getElementById('displayKTA').innerText = "KTA: " + (d[0] || "-");
-                document.getElementById('displayJabatan').innerText = d[3] || "ANGGOTA";
+                console.log("Menampilkan Data Terbaru:", d[1]);
 
-                // Logika Foto Drive
+                // Update Tampilan
+                document.getElementById('displayNama').innerText = d[1]; // Kolom B
+                document.getElementById('displayKTA').innerText = "KTA: " + (d[0] || "-"); // Kolom A
+                document.getElementById('displayJabatan').innerText = (d[3] && d[3] !== "FALSE") ? d[3] : "ANGGOTA"; // Kolom D
+
+                // Logika Foto (Kolom C)
                 let rawUrl = d[2] ? d[2].trim() : "";
-                if (rawUrl.includes("id=")) {
-                    let id = rawUrl.split('id=')[1].split('&')[0];
-                    document.getElementById('displayFoto').src = "https://lh3.googleusercontent.com/u/0/d/" + id;
+                let finalFoto = "https://via.placeholder.com/300?text=FOTO+KOSONG";
+
+                if (rawUrl.includes("drive.google.com")) {
+                    let fileId = "";
+                    if (rawUrl.includes("id=")) {
+                        fileId = rawUrl.split('id=')[1].split('&')[0];
+                    } else {
+                        // Ambil ID dari link jenis /file/d/ID/view
+                        let match = rawUrl.match(/\/d\/(.+?)\//);
+                        fileId = match ? match[1] : (rawUrl.match(/[-\w]{25,}/) || [])[0];
+                    }
+                    
+                    if (fileId) {
+                        // Menggunakan thumbnail resolusi tinggi agar lebih cepat & muncul
+                        finalFoto = `https://lh3.googleusercontent.com/d/${fileId}`;
+                    }
                 } else if (rawUrl.includes("http")) {
-                    document.getElementById('displayFoto').src = rawUrl;
+                    finalFoto = rawUrl;
                 }
+
+                document.getElementById('displayFoto').src = finalFoto;
                 
-                console.log("Berhasil update tampilan: " + d[1]);
             } else {
-                console.warn("Data valid kosong, Bos!");
+                console.warn("Tidak ada data valid untuk ditampilkan.");
             }
         } catch (e) {
             console.error("Waduh, Error Bos:", e.message);
-            alert("Ada masalah: " + e.message); // Ini akan muncul kotak peringatan di layar
         }
     }
 
-    // Jalankan
+    // Jalankan setiap 3 detik agar sangat responsif
     updateDashboard();
-    setInterval(updateDashboard, 5000); // Cek tiap 5 detik
+    setInterval(updateDashboard, 3000);
 </script>
 </body>
 </html>
