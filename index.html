@@ -25,15 +25,56 @@
     </div>
 
     <script>
-    // ID Spreadsheet kita
+    // ID Spreadsheet Bos
     const ssID = '1Egbat36S6ZXP-x_bJNHVIQgJi26H-siDsY538_iGl_8';
     const url = `https://docs.google.com/spreadsheets/d/${ssID}/gviz/tq?tqx=out:csv&sheet=Data_Anggota`;
 
     async function updateDashboard() {
+        console.log("Mencoba mengambil data..."); // Ini harus muncul di Inspect
+        try {
+            const res = await fetch(url + '&v=' + new Date().getTime());
+            if (!res.ok) throw new Error("Gagal konek ke Google Sheets");
+            
+            const csv = await res.text();
+            console.log("Data CSV diterima!");
 
-    // Jalankan otomatis setiap 3 detik (biar real-time kayak GAS)
-    setInterval(updateDashboard, 3000);
+            const rows = csv.split('\n').map(r => r.split('","').map(c => c.replace(/"/g, '')));
+            
+            // Filter data yang kolom namanya ada isinya
+            const validData = rows.filter(r => r[1] && r[1].trim() !== "" && r[1].toUpperCase() !== "NAMA");
+
+            console.log("Total baris valid:", validData.length);
+
+            if (validData.length > 0) {
+                const d = validData[validData.length - 1]; // Ambil baris terakhir
+                
+                // Update ke Layar
+                document.getElementById('displayNama').innerText = d[1];
+                document.getElementById('displayKTA').innerText = "KTA: " + (d[0] || "-");
+                document.getElementById('displayJabatan').innerText = d[3] || "ANGGOTA";
+
+                // Logika Foto Drive
+                let rawUrl = d[2] ? d[2].trim() : "";
+                if (rawUrl.includes("id=")) {
+                    let id = rawUrl.split('id=')[1].split('&')[0];
+                    document.getElementById('displayFoto').src = "https://lh3.googleusercontent.com/u/0/d/" + id;
+                } else if (rawUrl.includes("http")) {
+                    document.getElementById('displayFoto').src = rawUrl;
+                }
+                
+                console.log("Berhasil update tampilan: " + d[1]);
+            } else {
+                console.warn("Data valid kosong, Bos!");
+            }
+        } catch (e) {
+            console.error("Waduh, Error Bos:", e.message);
+            alert("Ada masalah: " + e.message); // Ini akan muncul kotak peringatan di layar
+        }
+    }
+
+    // Jalankan
     updateDashboard();
+    setInterval(updateDashboard, 5000); // Cek tiap 5 detik
 </script>
 </body>
 </html>
