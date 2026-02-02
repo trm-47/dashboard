@@ -32,29 +32,25 @@
         console.log("Mencoba mengambil data...");
         try {
             const res = await fetch(url + '&v=' + new Date().getTime());
-            if (!res.ok) throw new Error("Gagal konek ke Google Sheets");
-            
             const csv = await res.text();
             
-            // Proses pecah baris CSV
-            const rows = csv.split('\n').map(r => {
-                return r.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(c => c.replace(/^"|"$/g, '').trim());
-            });
+            // Parsing CSV
+            const rows = csv.split('\n').map(r => r.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(c => c.replace(/^"|"$/g, '').trim()));
             
-            // Ambil hanya baris yang ada namanya
+            // Filter baris valid (Nama tidak kosong & bukan header)
             const validData = rows.filter(r => r[1] && r[1].trim() !== "" && r[1].toUpperCase() !== "NAMA");
 
             if (validData.length > 0) {
+                // AMBIL BARIS TERAKHIR
                 const d = validData[validData.length - 1]; 
                 
                 document.getElementById('displayNama').innerText = d[1];
                 document.getElementById('displayKTA').innerText = "KTA: " + (d[0] || "-");
                 document.getElementById('displayJabatan').innerText = (d[3] && d[3] !== "FALSE") ? d[3] : "ANGGOTA";
 
-                // Logika Foto Drive (Perbaikan Link)
+                // LOGIKA FOTO SAKTI
                 let rawUrl = d[2] ? d[2].trim() : "";
-                // Gunakan logo PDI-P atau logo default Bos sebagai cadangan jika link kosong
-                let finalFoto = "https://i.imghippo.com/files/OudV6751Ttw.jpg"; 
+                let finalFoto = "https://i.imgur.com/861S6pa.png"; // Link Logo PDI-P stabil
 
                 if (rawUrl.includes("drive.google.com")) {
                     let fileId = "";
@@ -64,9 +60,8 @@
                         let match = rawUrl.match(/\/d\/(.+?)\//);
                         fileId = match ? match[1] : (rawUrl.match(/[-\w]{25,}/) || [])[0];
                     }
-                    
                     if (fileId) {
-                        // Link sakti tanpa kurung kurawal
+                        // Link thumbnail Google Drive yang paling ringan
                         finalFoto = "https://lh3.googleusercontent.com/d/" + fileId;
                     }
                 } else if (rawUrl.includes("http")) {
@@ -77,7 +72,7 @@
                 console.log("Berhasil update: " + d[1]);
             }
         } catch (e) {
-            console.error("Error:", e.message);
+            console.error("Koneksi gagal:", e.message);
         }
     }
 
