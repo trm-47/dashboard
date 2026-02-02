@@ -1,123 +1,176 @@
 <!DOCTYPE html>
-<html>
+<html lang="id">
 <head>
-  <base target="_top">
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;900&family=Rajdhani:wght@500;700&display=swap" rel="stylesheet">
-  <style>
-    :root { --pdi-red: #ff0000; --neon-glow: #ff4d4d; }
-    body { 
-      background: #000; color: #fff; font-family: 'Rajdhani', sans-serif; 
-      margin: 0; padding: 20px; overflow: hidden; height: 100vh;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DASHBOARD REALTIME PDI</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@500;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root { 
+            --pdi-red: #FF0000; 
+            --pdi-dark: #0A0A0A;
+            --neon-red: #ff3131;
+        }
 
-    /* Header & Agenda */
-    .header { border-bottom: 4px solid var(--pdi-red); margin-bottom: 20px; padding-bottom: 10px; }
-    .agenda-box { font-family: 'Orbitron'; color: var(--pdi-red); font-size: 1.2rem; margin-top: 5px; }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0; padding: 20px; background: var(--pdi-dark);
+            color: #fff; font-family: 'Rajdhani', sans-serif;
+            height: 100vh; overflow: hidden; display: flex; flex-direction: column;
+        }
 
-    /* KPI Cards */
-    .kpi-container { display: flex; gap: 20px; margin-bottom: 25px; }
-    .card { 
-      flex: 1; background: linear-gradient(145deg, #1a0000, #000); 
-      border: 1px solid #444; padding: 15px; border-radius: 10px; text-align: center;
-    }
-    .val { font-family: 'Orbitron'; font-size: 3rem; font-weight: 900; color: var(--pdi-red); }
-    .label { text-transform: uppercase; font-size: 0.9rem; letter-spacing: 2px; color: #aaa; }
+        /* HEADER SECTION */
+        .header {
+            display: flex; justify-content: space-between; align-items: center;
+            border-left: 8px solid var(--pdi-red); padding: 10px 25px;
+            background: linear-gradient(90deg, #1a0000 0%, transparent 100%);
+            margin-bottom: 20px;
+        }
+        .main-title { font-family: 'Orbitron'; font-size: 2.5rem; font-weight: 900; letter-spacing: 2px; }
+        #textAgenda { color: var(--pdi-red); font-size: 1.2rem; font-weight: 700; text-transform: uppercase; }
 
-    /* Table Style */
-    .table-wrapper { 
-      height: 60vh; overflow-y: auto; border: 1px solid #333; border-radius: 10px; 
-      background: rgba(10, 10, 10, 0.9);
-    }
-    table { width: 100%; border-collapse: collapse; }
-    thead th { 
-      position: sticky; top: 0; background: var(--pdi-red); color: white; 
-      padding: 15px; font-family: 'Orbitron'; text-align: left;
-    }
-    td { padding: 15px; font-size: 1.4rem; border-bottom: 1px solid #222; font-weight: 700; }
+        /* KPI SECTION (B5, C5, D5) */
+        .kpi-row { display: flex; gap: 20px; margin-bottom: 20px; }
+        .kpi-card {
+            flex: 1; background: #111; border: 1px solid #333;
+            border-radius: 12px; padding: 20px; text-align: center;
+            position: relative; overflow: hidden;
+        }
+        .kpi-card::after {
+            content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 4px; background: var(--pdi-red);
+        }
+        .kpi-val { font-family: 'Orbitron'; font-size: 3.5rem; font-weight: 900; color: #fff; margin: 5px 0; }
+        .kpi-label { font-size: 0.9rem; color: #888; text-transform: uppercase; letter-spacing: 2px; }
 
-    /* Badge Status */
-    .badge { 
-      padding: 5px 15px; border-radius: 4px; font-size: 0.9rem; font-family: 'Orbitron';
-      border: 1px solid;
-    }
-    .hadir { color: #ff0000; border-color: #ff0000; box-shadow: 0 0 10px rgba(255,0,0,0.2); }
-    .izin { color: #eee; border-color: #eee; opacity: 0.6; }
+        /* TABLE SECTION (A7 DST) */
+        .table-container {
+            flex: 1; overflow: hidden; border-radius: 15px 15px 0 0;
+            background: rgba(255, 255, 255, 0.03); border: 1px solid #222;
+        }
+        table { width: 100%; border-collapse: collapse; text-align: left; }
+        thead th {
+            position: sticky; top: 0; background: var(--pdi-red); color: #fff;
+            padding: 18px; font-family: 'Orbitron'; font-size: 1.1rem;
+        }
+        tbody td {
+            padding: 15px 20px; font-size: 1.6rem; font-weight: 700;
+            border-bottom: 1px solid #222;
+        }
 
-    /* Animasi Baris Baru (A7) */
-    .new-row {
-      animation: flash 2s infinite;
-      background: rgba(255, 0, 0, 0.1);
-    }
-    @keyframes flash {
-      0% { background: rgba(255, 0, 0, 0.3); }
-      50% { background: transparent; }
-      100% { background: rgba(255, 0, 0, 0.3); }
-    }
-  </style>
+        /* STATUS BADGE */
+        .badge {
+            padding: 4px 12px; border-radius: 4px; font-family: 'Orbitron'; font-size: 0.9rem;
+            border: 1px solid;
+        }
+        .status-HADIR { color: var(--neon-red); border-color: var(--neon-red); box-shadow: 0 0 8px rgba(255,0,0,0.3); }
+        .status-IZIN { color: #aaa; border-color: #555; }
+
+        /* FOOTER */
+        .footer {
+            height: 40px; background: var(--pdi-red); display: flex; align-items: center;
+            padding: 0 20px; font-family: 'Orbitron'; font-weight: 900; font-size: 0.8rem;
+        }
+    </style>
 </head>
 <body>
 
-  <div class="header">
-    <div style="font-family:'Orbitron'; font-size: 2.5rem; font-weight: 900;">DASHBOARD REALTIME</div>
-    <div class="agenda-box" id="dispAgenda">MEMUAT AGENDA...</div>
-  </div>
+    <div class="header">
+        <div>
+            <div class="main-title">MONITORING PDI</div>
+            <div id="textAgenda">Connecting to Server...</div>
+        </div>
+        <div id="clock" style="font-family:'Orbitron'; font-size: 2rem;">00:00:00</div>
+    </div>
 
-  <div class="kpi-container">
-    <div class="card"><div class="val" id="dispHadir">0</div><div class="label">Hadir</div></div>
-    <div class="card"><div class="val" id="dispIzin">0</div><div class="label">Izin/Sakit</div></div>
-    <div class="card"><div class="val" id="dispPersen">0%</div><div class="label">Kehadiran</div></div>
-  </div>
+    <div class="kpi-row">
+        <div class="kpi-card">
+            <div class="kpi-label">Total Hadir (C5)</div>
+            <div class="kpi-val" id="countHadir">0</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-label">Izin/Sakit (B5)</div>
+            <div class="kpi-val" id="countIzin">0</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-label">Persentase (D5)</div>
+            <div class="kpi-val" id="countPersen">0%</div>
+        </div>
+    </div>
 
-  <div class="table-wrapper" id="scrollArea">
-    <table>
-      <thead>
-        <tr>
-          <th>NO</th>
-          <th>NAMA PENGURUS</th>
-          <th>WAKTU</th>
-          <th>STATUS</th>
-        </tr>
-      </thead>
-      <tbody id="tableBody"></tbody>
-    </table>
-  </div>
+    <div class="table-container" id="scrollBox">
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 80px; text-align: center;">NO</th>
+                    <th>NAMA PENGURUS</th>
+                    <th>WAKTU</th>
+                    <th style="text-align: center;">STATUS</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody">
+                </tbody>
+        </table>
+    </div>
 
-  <script>
-    let lastDataCount = 0;
+    <div class="footer">
+        <marquee id="msg">SYSTEM ONLINE - READY TO MONITOR ATTENDANCE</marquee>
+    </div>
 
-    function refreshData() {
-      google.script.run.withSuccessHandler(updateUI).getDataDashboard();
-    }
+    <script>
+        // MASUKKAN URL WEB APP GAS BOS DI SINI!
+        const API_URL = "URL_DEPLOY_GAS_BOS_DI_SINI";
 
-    function updateUI(data) {
-      document.getElementById('dispAgenda').innerText = data.agenda;
-      document.getElementById('dispHadir').innerText = data.hadir;
-      document.getElementById('dispIzin').innerText = data.izin;
-      document.getElementById('dispPersen').innerText = (data.persen * 100).toFixed(0) + "%";
+        // 1. JAM DIGITAL
+        setInterval(() => {
+            document.getElementById('clock').innerText = new Date().toLocaleTimeString('id-ID');
+        }, 1000);
 
-      const tbody = document.getElementById('tableBody');
-      let rows = "";
-      
-      data.daftar.forEach((row, index) => {
-        // Baris pertama (index 0) dikasih class animasi kalau ada penambahan data
-        let isNew = (index === 0 && data.daftar.length > lastDataCount && lastDataCount !== 0);
-        let statusClass = row[3] === "HADIR" ? "hadir" : "izin";
-        
-        rows += `<tr class="${isNew ? 'new-row' : ''}">
-          <td style="color:var(--pdi-red)">${row[0]}</td>
-          <td>${row[1]}</td>
-          <td style="font-size:1.1rem">${row[2]}</td>
-          <td><span class="badge ${statusClass}">${row[3]}</span></td>
-        </tr>`;
-      });
-      
-      tbody.innerHTML = rows;
-      lastDataCount = data.daftar.length;
-    }
+        // 2. FUNGSI AMBIL DATA DARI JEMBATAN GAS
+        async function fetchData() {
+            try {
+                const response = await fetch(API_URL);
+                const data = await response.json();
+                
+                // Update UI Header & KPI
+                document.getElementById('textAgenda').innerText = data.agenda;
+                document.getElementById('countHadir').innerText = data.hadir;
+                document.getElementById('countIzin').innerText = data.izin;
+                document.getElementById('countPersen').innerText = (data.persen * 100).toFixed(0) + "%";
 
-    // Jalankan interval cek data tiap 3 detik
-    setInterval(refreshData, 3000);
-    refreshData(); // Load pertama kali
-  </script>
+                // Update Tabel
+                const tbody = document.getElementById('tableBody');
+                tbody.innerHTML = data.daftar.map(row => `
+                    <tr>
+                        <td style="text-align: center; color: var(--pdi-red);">${row[0]}</td>
+                        <td>${row[1]}</td>
+                        <td style="font-size: 1.2rem; color: #888;">${row[2]}</td>
+                        <td style="text-align: center;">
+                            <span class="badge status-${row[3]}">${row[3]}</span>
+                        </td>
+                    </tr>
+                `).join('');
+
+            } catch (err) {
+                console.error("Error fetching data:", err);
+                document.getElementById('msg').innerText = "CONNECTION LOST - RECONNECTING...";
+            }
+        }
+
+        // 3. AUTO SCROLL BIAR DINAMIS DI TV
+        const scrollBox = document.getElementById('scrollBox');
+        function autoScroll() {
+            if (scrollBox.scrollTop + scrollBox.clientHeight >= scrollBox.scrollHeight) {
+                setTimeout(() => { scrollBox.scrollTop = 0; }, 3000);
+            } else {
+                scrollBox.scrollTop += 1;
+            }
+        }
+
+        // JALANKAN SEMUA
+        setInterval(fetchData, 5000); // Tarik data tiap 5 detik
+        setInterval(autoScroll, 40);   // Scroll halus
+        fetchData(); // Load awal
+    </script>
 </body>
 </html>
