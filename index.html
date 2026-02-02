@@ -26,58 +26,51 @@
 
 <script>
     const ssID = '1Egbat36S6ZXP-x_bJNHVIQgJi26H-siDsY538_iGl_8';
-    const url = `https://docs.google.com/spreadsheets/d/${ssID}/gviz/tq?tqx=out:csv&sheet=Data_Anggota`;
+    // Kita arahkan ke sheet 'Display'
+    const url = `https://docs.google.com/spreadsheets/d/${ssID}/gviz/tq?tqx=out:csv&sheet=Display`;
 
     async function updateDashboard() {
-        console.log("Mencoba mengambil data...");
         try {
             const res = await fetch(url + '&v=' + new Date().getTime());
             const csv = await res.text();
             
-            // Parsing CSV
+            // Parsing baris pertama hasil Query/VLOOKUP
             const rows = csv.split('\n').map(r => r.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(c => c.replace(/^"|"$/g, '').trim()));
             
-            // Filter baris valid (Nama tidak kosong & bukan header)
-            const validData = rows.filter(r => r[1] && r[1].trim() !== "" && r[1].toUpperCase() !== "NAMA");
+            if (rows.length > 0) {
+                const d = rows[0]; // Baris pertama hasil jembatan data
 
-            if (validData.length > 0) {
-                // AMBIL BARIS TERAKHIR
-                const d = validData[validData.length - 1]; 
-                
-                document.getElementById('displayNama').innerText = d[1];
+                // Mapping Hasil: d[0]=KTA, d[1]=Nama, d[2]=Link Foto, d[3]=Jabatan
+                document.getElementById('displayNama').innerText = d[1] || "MENUNGGU SCAN...";
                 document.getElementById('displayKTA').innerText = "KTA: " + (d[0] || "-");
                 document.getElementById('displayJabatan').innerText = (d[3] && d[3] !== "FALSE") ? d[3] : "ANGGOTA";
 
-                // LOGIKA FOTO SAKTI
+                // Logika Foto
                 let rawUrl = d[2] ? d[2].trim() : "";
-                let finalFoto = "https://i.imgur.com/861S6pa.png"; // Link Logo PDI-P stabil
+                let finalFoto = "https://i.imgur.com/861S6pa.png"; // Default Logo
 
-                if (rawUrl.includes("drive.google.com")) {
-                    let fileId = "";
-                    if (rawUrl.includes("id=")) {
-                        fileId = rawUrl.split('id=')[1].split('&')[0];
-                    } else {
-                        let match = rawUrl.match(/\/d\/(.+?)\//);
-                        fileId = match ? match[1] : (rawUrl.match(/[-\w]{25,}/) || [])[0];
-                    }
-                    if (fileId) {
-                        // Link thumbnail Google Drive yang paling ringan
-                        finalFoto = "https://lh3.googleusercontent.com/d/" + fileId;
-                    }
+                if (rawUrl.includes("id=")) {
+                    let id = rawUrl.split('id=')[1].split('&')[0];
+                    finalFoto = "https://lh3.googleusercontent.com/d/" + id;
                 } else if (rawUrl.includes("http")) {
                     finalFoto = rawUrl;
                 }
 
-                document.getElementById('displayFoto').src = finalFoto;
-                console.log("Berhasil update: " + d[1]);
+                // Hanya update src jika fotonya beda (biar gak kedip)
+                if(document.getElementById('displayFoto').src !== finalFoto) {
+                    document.getElementById('displayFoto').src = finalFoto;
+                }
+                
+                console.log("Monitoring Scan: " + d[1]);
             }
         } catch (e) {
-            console.error("Koneksi gagal:", e.message);
+            console.error("Dashboard Offline:", e.message);
         }
     }
 
+    // Jalankan
     updateDashboard();
-    setInterval(updateDashboard, 3000);
+    setInterval(updateDashboard, 2000); // Cek tiap 2 detik
 </script>
 </body>
 </html>
