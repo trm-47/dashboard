@@ -25,44 +25,65 @@
     </div>
 
     <script>
-        const ssID = '1Egbat36S6ZXP-x_bJNHVIQgJi26H-siDsY538_iGl_8';
-        const url = `https://docs.google.com/spreadsheets/d/${ssID}/gviz/tq?tqx=out:csv&sheet=Data_Anggota`;
+    // ID Spreadsheet kita
+    const ssID = '1Egbat36S6ZXP-x_bJNHVIQgJi26H-siDsY538_iGl_8';
+    const url = `https://docs.google.com/spreadsheets/d/${ssID}/gviz/tq?tqx=out:csv&sheet=Data_Anggota`;
 
-        async function updateData() {
-            try {
-                // Tambahkan random parameter biar gak kena cache
-                const response = await fetch(url + '&v=' + Math.random());
-                const text = await response.json(); // Sebenarnya ini teks CSV
-            } catch(e) { 
-                /* bypass error json karena formatnya csv */ 
-            }
+    async function updateDashboard() {
+        try {
+            const res = await fetch(url + '&v=' + Math.random());
+            const csv = await res.text();
+            
+            // Pecah data CSV jadi baris dan kolom
+            const rows = csv.split('\n').map(r => r.split('","').map(c => c.replace(/"/g, '')));
+            
+            // Filter hanya baris yang ada namanya (biar baris kosong 1000 biji itu nggak ganggu)
+            const validData = rows.filter(r => r[1] && r[1].trim() !== "" && r[1].toUpperCase() !== "NAMA" && r[1].toUpperCase() !== "FALSE");
 
-            // Gunakan fetch manual untuk teks
-            fetch(url + '&v=' + Math.random())
-                .then(r => r.text())
-                .then(csv => {
-                    const rows = csv.split('\n').map(r => r.split('","').map(c => c.replace(/"/g, '')));
-                    
-                    // FILTER: Hanya ambil baris yang kolom B (index 1) ada isinya dan bukan kata "FALSE"
-                    const validData = rows.filter(r => r[1] && r[1].trim() !== "" && r[1].toUpperCase() !== "FALSE" && r[1].toUpperCase() !== "NAMA");
+            if (validData.length > 0) {
+                const d = validData[validData.length - 1]; // Ambil data terakhir (paling baru)
 
-                    if (validData.length > 0) {
-                        const d = validData[validData.length - 1]; // Ambil yang paling bawah dari yang valid
+                // 1. Update Nama, Jabatan, KTA
+                document.getElementById('displayNama').innerText = d[1];
+                document.getElementById('displayKTA').innerText = "KTA: " + (d[0] || "-");
+                document.getElementById('displayJabatan').innerText = (d[3] && d[3] !== "FALSE") ? d[3] : "ANGGOTA";
 
-                        document.getElementById('displayNama').innerText = d[1]; // Nama
-                        document.getElementById('displayJabatan').innerText = (d[3] && d[3] !== "FALSE") ? d[3] : "ANGGOTA"; // Jabatan
-                        document.getElementById('displayKTA').innerText = "KTA: " + (d[0] || "-"); // KTA
-                        
-                        // Foto: Jika kolom C ada isinya, ambil dari folder /foto/
-                        if(d[2] && d[2] !== "FALSE" && d[2].trim() !== "") {
-                            document.getElementById('displayFoto').src = "foto/" + d[2].trim();
-                        }
+                // 2. Cloning Logika Foto (Ini bagian paling penting!)
+                let rawUrl = d[2] ? d[2].trim() : "";
+                let finalFoto = "https://via.placeholder.com/300?text=FOTO+KOSONG";
+
+                if (rawUrl.includes("drive.google.com")) {
+                    // Jika link dari Google Drive, kita bedah ID-nya otomatis
+                    let fileId = "";
+                    if (rawUrl.includes("id=")) {
+                        fileId = rawUrl.split('id=')[1].split('&')[0];
+                    } else {
+                        fileId = (rawUrl.match(/[-\w]{25,}/) || [])[0];
                     }
-                });
-        }
+                    
+                    if (fileId) {
+                        // Link sakti supaya tembus ke dashboard
+                        finalFoto = `https://lh3.googleusercontent.com/d/${fileId}`;
+                    }
+                } else if (rawUrl.includes("http")) {
+                    // Jika link gambar biasa (bukan Drive)
+                    finalFoto = rawUrl;
+                } else if (rawUrl !== "" && rawUrl !== "FALSE") {
+                    // Jika cuma nama file (cari di folder foto GitHub)
+                    finalFoto = "foto/" + rawUrl;
+                }
 
-        setInterval(updateData, 3000);
-        updateData();
-    </script>
+                // Tampilkan Foto
+                document.getElementById('displayFoto').src = finalFoto;
+            }
+        } catch (e) {
+            console.error("Gagal update data:", e);
+        }
+    }
+
+    // Jalankan otomatis setiap 3 detik (biar real-time kayak GAS)
+    setInterval(updateDashboard, 3000);
+    updateDashboard();
+</script>
 </body>
 </html>
