@@ -26,28 +26,40 @@
 
 <script>
     const ssID = '1Egbat36S6ZXP-x_bJNHVIQgJi26H-siDsY538_iGl_8';
-    // Kita arahkan ke sheet 'Display'
-    const url = `https://docs.google.com/spreadsheets/d/${ssID}/gviz/tq?tqx=out:csv&sheet=Display`;
+    // Kita tembak sheet Dashboard_Realtime
+    const url = `https://docs.google.com/spreadsheets/d/${ssID}/gviz/tq?tqx=out:csv&sheet=Dashboard_Realtime`;
 
     async function updateDashboard() {
+        console.log("Mencoba sinkronisasi data...");
         try {
             const res = await fetch(url + '&v=' + new Date().getTime());
             const csv = await res.text();
             
-            // Parsing baris pertama hasil Query/VLOOKUP
+            // Pecah baris CSV
             const rows = csv.split('\n').map(r => r.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(c => c.replace(/^"|"$/g, '').trim()));
             
-            if (rows.length > 0) {
-                const d = rows[0]; // Baris pertama hasil jembatan data
+            // Karena data Bos ada di baris A7 (indeks ke-6 di array jika tanpa header)
+            // Tapi karena gviz biasanya menganggap baris pertama yang ada isinya sebagai data, 
+            // kita cari baris yang beneran ada namanya.
+            const validData = rows.filter(r => r[1] && r[1].trim() !== "" && r[1].toUpperCase() !== "NAMA" && r[1] !== "Data Tidak Ditemukan");
 
-                // Mapping Hasil: d[0]=KTA, d[1]=Nama, d[2]=Link Foto, d[3]=Jabatan
-                document.getElementById('displayNama').innerText = d[1] || "MENUNGGU SCAN...";
+            if (validData.length > 0) {
+                // Ambil baris pertama dari hasil filter (karena rumus Bos cuma nampilin data yang dicari/terakhir)
+                const d = validData[0]; 
+
+                // Mapping berdasarkan rumus Bos:
+                // Col1 (d[0]) = KTA
+                // Col2 (d[1]) = Nama
+                // Col3 (d[2]) = Foto (Hasil VLOOKUP ke Data_Anggota kolom 5)
+                // Col4 (d[3]) = Status/Jabatan
+                
+                document.getElementById('displayNama').innerText = d[1];
                 document.getElementById('displayKTA').innerText = "KTA: " + (d[0] || "-");
-                document.getElementById('displayJabatan').innerText = (d[3] && d[3] !== "FALSE") ? d[3] : "ANGGOTA";
+                document.getElementById('displayJabatan').innerText = (d[3] && d[3] !== "FALSE") ? d[3] : "HADIR";
 
-                // Logika Foto
+                // Logika Foto (Col3 / d[2])
                 let rawUrl = d[2] ? d[2].trim() : "";
-                let finalFoto = "https://i.imgur.com/861S6pa.png"; // Default Logo
+                let finalFoto = "https://i.imgur.com/861S6pa.png"; 
 
                 if (rawUrl.includes("id=")) {
                     let id = rawUrl.split('id=')[1].split('&')[0];
@@ -56,19 +68,17 @@
                     finalFoto = rawUrl;
                 }
 
-                // Hanya update src jika fotonya beda (biar gak kedip)
                 if(document.getElementById('displayFoto').src !== finalFoto) {
                     document.getElementById('displayFoto').src = finalFoto;
                 }
                 
-                console.log("Monitoring Scan: " + d[1]);
+                console.log("Data Realtime: " + d[1]);
             }
         } catch (e) {
-            console.error("Dashboard Offline:", e.message);
+            console.error("Error Koneksi:", e.message);
         }
     }
 
-    // Jalankan
     updateDashboard();
     setInterval(updateDashboard, 2000); // Cek tiap 2 detik
 </script>
