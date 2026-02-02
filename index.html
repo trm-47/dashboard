@@ -24,10 +24,8 @@
         <div id="displayKTA" class="kta">KTA: -</div>
     </div>
 
-    <script>
+<script>
     const ssID = '1Egbat36S6ZXP-x_bJNHVIQgJi26H-siDsY538_iGl_8';
-    // Gunakan gviz tq tanpa parameter sheet jika nama sheetnya default, 
-    // atau pastikan nama sheet 'Data_Anggota' benar-benar pas ejaannya.
     const url = `https://docs.google.com/spreadsheets/d/${ssID}/gviz/tq?tqx=out:csv&sheet=Data_Anggota`;
 
     async function updateDashboard() {
@@ -38,67 +36,51 @@
             
             const csv = await res.text();
             
-            // Proses pembersihan CSV yang lebih tangguh
+            // Proses pecah baris CSV
             const rows = csv.split('\n').map(r => {
                 return r.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(c => c.replace(/^"|"$/g, '').trim());
             });
             
-            // FILTER: Hanya ambil baris yang kolom NAMANYA (Indeks 1) tidak kosong, 
-            // bukan kata "NAMA", dan bukan "FALSE"
-            const validData = rows.filter(r => 
-                r[1] && 
-                r[1] !== "" && 
-                r[1].toUpperCase() !== "NAMA" && 
-                r[1].toUpperCase() !== "NAMA ANGGOTA" &&
-                r[1].toUpperCase() !== "FALSE"
-            );
-
-            console.log("Total baris valid ditemukan:", validData.length);
+            // Ambil hanya baris yang ada namanya
+            const validData = rows.filter(r => r[1] && r[1].trim() !== "" && r[1].toUpperCase() !== "NAMA");
 
             if (validData.length > 0) {
-                // KUNCINYA DI SINI: Ambil baris paling terakhir yang terisi
                 const d = validData[validData.length - 1]; 
                 
-                console.log("Menampilkan Data Terbaru:", d[1]);
+                document.getElementById('displayNama').innerText = d[1];
+                document.getElementById('displayKTA').innerText = "KTA: " + (d[0] || "-");
+                document.getElementById('displayJabatan').innerText = (d[3] && d[3] !== "FALSE") ? d[3] : "ANGGOTA";
 
-                // Update Tampilan
-                document.getElementById('displayNama').innerText = d[1]; // Kolom B
-                document.getElementById('displayKTA').innerText = "KTA: " + (d[0] || "-"); // Kolom A
-                document.getElementById('displayJabatan').innerText = (d[3] && d[3] !== "FALSE") ? d[3] : "ANGGOTA"; // Kolom D
-
-                // Logika Foto (Kolom C)
+                // Logika Foto Drive (Perbaikan Link)
                 let rawUrl = d[2] ? d[2].trim() : "";
-                let finalFoto = "https://via.placeholder.com/300?text=FOTO+KOSONG";
+                // Gunakan logo PDI-P atau logo default Bos sebagai cadangan jika link kosong
+                let finalFoto = "https://i.imghippo.com/files/OudV6751Ttw.jpg"; 
 
                 if (rawUrl.includes("drive.google.com")) {
                     let fileId = "";
                     if (rawUrl.includes("id=")) {
                         fileId = rawUrl.split('id=')[1].split('&')[0];
                     } else {
-                        // Ambil ID dari link jenis /file/d/ID/view
                         let match = rawUrl.match(/\/d\/(.+?)\//);
                         fileId = match ? match[1] : (rawUrl.match(/[-\w]{25,}/) || [])[0];
                     }
                     
                     if (fileId) {
-                        // Menggunakan thumbnail resolusi tinggi agar lebih cepat & muncul
-                        finalFoto = `https://lh3.googleusercontent.com/d/${fileId}`;
+                        // Link sakti tanpa kurung kurawal
+                        finalFoto = "https://lh3.googleusercontent.com/d/" + fileId;
                     }
                 } else if (rawUrl.includes("http")) {
                     finalFoto = rawUrl;
                 }
 
                 document.getElementById('displayFoto').src = finalFoto;
-                
-            } else {
-                console.warn("Tidak ada data valid untuk ditampilkan.");
+                console.log("Berhasil update: " + d[1]);
             }
         } catch (e) {
-            console.error("Waduh, Error Bos:", e.message);
+            console.error("Error:", e.message);
         }
     }
 
-    // Jalankan setiap 3 detik agar sangat responsif
     updateDashboard();
     setInterval(updateDashboard, 3000);
 </script>
